@@ -1,0 +1,54 @@
+{
+  "expo": {
+    "name": "FinanceFlow",
+    "slug": "finance-app",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#4F46E5"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.financeflow.app",
+      "icon": "./assets/icon.png"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundColor": "#4F46E5",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "icon": "./assets/icon.png",
+      "package": "com.financeflow.app"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "name": "FinanceFlow",
+      "splash": {
+        "image": "./assets/splash-icon.png",
+        "resizeMode": "contain",
+        "backgroundColor": "#4F46E5"
+      }
+    },
+    "plugins": [
+      "expo-status-bar",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#4F46E5",
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 220,
+          "resizeMode": "contain",
+          "dark": {
+            "backgroundColor": "#0F172A",
+            "image": "./assets/splash-icon.png"
+          }
+        }
+      ]
+    ]
+  }
+}
