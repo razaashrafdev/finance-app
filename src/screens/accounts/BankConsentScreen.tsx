@@ -3,10 +3,10 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   TouchableOpacity,
   StatusBar
 } from 'react-native';
+import { ScreenScrollView } from '../../components/common/ScreenScroll';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../theme/ThemeContext';
 import { spacing, borderRadius } from '../../theme/spacing';
@@ -95,9 +95,9 @@ const BankConsentScreen: React.FC<BankConsentScreenProps> = ({
         <View style={styles.headerSpacer} />
       </View>
 
-      <ScrollView
+      <ScreenScrollView
         style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: 156 }]}
         showsVerticalScrollIndicator={false}
       >
         {/* Step Indicator */}
@@ -249,7 +249,7 @@ const BankConsentScreen: React.FC<BankConsentScreenProps> = ({
             I authorize FinanceFlow to access my account data in read-only mode
           </Text>
         </TouchableOpacity>
-      </ScrollView>
+      </ScreenScrollView>
 
       {/* Bottom Actions */}
       <View

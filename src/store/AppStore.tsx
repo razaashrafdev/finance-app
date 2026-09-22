@@ -1,4 +1,8 @@
-import React, { createContext, useContext, useMemo, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { Linking } from 'react-native';
+import * as authApi from '../api/auth';
+import { readAuthLink } from '../auth/links';
+import { clearSession, getAccessToken, saveSession } from '../storage/session';
 import {
   userProfile as mockUser,
   accounts as mockAccounts,
@@ -24,6 +28,18 @@ type Investment = (typeof mockInvestments)[number];
 type NotificationItem = (typeof mockNotifications)[number];
 type Subscription = (typeof mockSubscriptions)[number];
 
+type BankStatement = {
+  accountId: string;
+  bankName: string;
+  accountName: string;
+  month: string;
+  year: number;
+  openingBalance: number;
+  closingBalance: number;
+  newBalance: number;
+  transactions: Transaction[];
+};
+
 function nextId(prefix = 'id') {
   return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
 }
@@ -33,8 +49,50 @@ function asNumber(value: unknown, fallback = 0) {
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
+function blankUser(base: UserProfile): UserProfile {
+  return {
+    ...base,
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    avatar: '',
+  };
+}
+
+function splitName(fullName: string, email: string) {
+  const cleaned = fullName.trim();
+  if (!cleaned) {
+    const local = email.split('@')[0] || 'User';
+    return { firstName: local, lastName: '' };
+  }
+  const [firstName, ...rest] = cleaned.split(/\s+/);
+  return { firstName, lastName: rest.join(' ') };
+}
+
+function applyAuthUser(
+  prev: UserProfile,
+  authUser: authApi.AuthUser | null,
+  profile: authApi.AuthProfile
+): UserProfile {
+  const fullName = profile?.full_name || authUser?.user_metadata?.full_name || '';
+  const email = profile?.email || authUser?.email || prev.email;
+  const names = splitName(fullName, email || '');
+  return {
+    ...prev,
+    firstName: names.firstName,
+    lastName: names.lastName,
+    email,
+    phone: profile?.phone || '',
+    avatar: profile?.avatar_url || authUser?.user_metadata?.avatar_url || '',
+    joinDate: authUser?.created_at || prev.joinDate,
+  };
+}
+
 interface AppStoreValue {
+  authReady: boolean;
   isAuthenticated: boolean;
+  recoveryToken: string | null;
   user: UserProfile;
   accounts: Account[];
   connectedAccounts: typeof mockConnectedAccounts;
@@ -46,10 +104,21 @@ interface AppStoreValue {
   investments: Investment[];
   notifications: NotificationItem[];
   subscriptions: Subscription[];
-  login: (email?: string, password?: string) => void;
-  signup: (data?: { firstName?: string; lastName?: string; email?: string; password?: string }) => void;
-  logout: () => void;
-  updateUser: (patch: Partial<UserProfile>) => void;
+  login: (email: string, password: string) => Promise<void>;
+  signup: (data: {
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+    password?: string;
+  }) => Promise<{ needsVerification: boolean }>;
+  verifySignupCode: (email: string, code: string) => Promise<void>;
+  resendSignupCode: (email: string) => Promise<void>;
+  logout: () => Promise<void>;
+  forgotPassword: (email: string) => Promise<void>;
+  resetPassword: (email: string, code: string, newPassword: string) => Promise<void>;
+  changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
+  clearRecovery: () => void;
+  updateUser: (patch: Partial<UserProfile>) => Promise<void>;
   addTransaction: (input: Partial<Transaction> & { type?: string }) => Transaction;
   updateTransaction: (id: string, patch: Partial<Transaction>) => void;
   deleteTransaction: (id: string) => void;
@@ -70,13 +139,16 @@ interface AppStoreValue {
   addTransfer: (fromId?: string, toId?: string, amount?: number | string, notes?: string) => void;
   markNotificationRead: (id: string) => void;
   markAllNotificationsRead: () => void;
+  importStatement: (statement: BankStatement) => void;
 }
 
 const AppStoreContext = createContext<AppStoreValue | null>(null);
 
 export function AppStoreProvider({ children }: { children: React.ReactNode }) {
+  const [authReady, setAuthReady] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [user, setUser] = useState<UserProfile>({ ...mockUser });
+  const [recoveryToken, setRecoveryToken] = useState<string | null>(null);
+  const [user, setUser] = useState<UserProfile>(() => blankUser({ ...mockUser }));
   const [accounts, setAccounts] = useState<Account[]>(() => mockAccounts.map((item) => ({ ...item })));
   const [connectedAccounts, setConnectedAccounts] = useState(() =>
     mockConnectedAccounts.map((item) => ({ ...item }))
@@ -98,30 +170,163 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
     mockSubscriptions.map((item) => ({ ...item }))
   );
 
-  const login = (email?: string, _password?: string) => {
-    if (email?.trim()) {
-      setUser((prev) => ({ ...prev, email: email.trim() }));
+  const establishSession = useCallback(
+    async (accessToken: string, refreshToken?: string, authUser?: authApi.AuthUser | null) => {
+      await saveSession(accessToken, refreshToken);
+      if (authUser) {
+        setUser((prev) => applyAuthUser(prev, authUser, null));
+      }
+      setIsAuthenticated(true);
+      try {
+        const me = await authApi.getMe();
+        setUser((prev) => applyAuthUser(prev, me.user, me.profile));
+      } catch {
+        // The sign-in payload already has the user when /me is briefly unavailable.
+      }
+    },
+    []
+  );
+
+  const login = useCallback(
+    async (email: string, password: string) => {
+      const result = await authApi.signIn(email.trim(), password);
+      if (!result.accessToken) {
+        throw new Error('Sign in did not return a session. Verify your email, then try again.');
+      }
+      await establishSession(result.accessToken, result.refreshToken, result.user);
+    },
+    [establishSession]
+  );
+
+  const signup = useCallback(
+    async (data: { firstName?: string; lastName?: string; email?: string; password?: string }) => {
+      const fullName = `${data.firstName || ''} ${data.lastName || ''}`.trim();
+      const result = await authApi.signUp((data.email || '').trim(), data.password || '', fullName);
+      if (!result.accessToken) {
+        return { needsVerification: true };
+      }
+      await establishSession(result.accessToken, result.refreshToken, result.user);
+      return { needsVerification: false };
+    },
+    [establishSession]
+  );
+
+  const verifySignupCode = useCallback(
+    async (email: string, code: string) => {
+      const result = await authApi.verifySignupCode(email.trim(), code.trim());
+      if (!result.accessToken) {
+        throw new Error('That code did not create a session. Request a new code and try again.');
+      }
+      await establishSession(result.accessToken, result.refreshToken, result.user);
+    },
+    [establishSession]
+  );
+
+  const resendSignupCode = useCallback(async (email: string) => {
+    await authApi.resendSignupCode(email.trim());
+  }, []);
+
+  const logout = useCallback(async () => {
+    try {
+      await authApi.signOut();
+    } catch {
+      // Clear the local session even if the server cannot be reached.
     }
-    setIsAuthenticated(true);
-  };
-
-  const signup = (data?: { firstName?: string; lastName?: string; email?: string; password?: string }) => {
-    setUser((prev) => ({
-      ...prev,
-      firstName: data?.firstName?.trim() || prev.firstName || 'Guest',
-      lastName: data?.lastName?.trim() || prev.lastName || 'User',
-      email: data?.email?.trim() || prev.email || 'guest@financeflow.app',
-    }));
-    setIsAuthenticated(true);
-  };
-
-  const logout = () => {
+    await clearSession();
+    setUser((prev) => blankUser(prev));
     setIsAuthenticated(false);
+  }, []);
+
+  const forgotPassword = useCallback(async (email: string) => {
+    await authApi.forgotPassword(email.trim());
+  }, []);
+
+  const resetPassword = useCallback(async (email: string, code: string, newPassword: string) => {
+    await authApi.resetPassword(email.trim(), code.trim(), newPassword);
+    await clearSession();
+    setRecoveryToken(null);
+    setUser((prev) => blankUser(prev));
+    setIsAuthenticated(false);
+  }, []);
+
+  const changePassword = useCallback(async (currentPassword: string, newPassword: string) => {
+    await authApi.changePassword(currentPassword, newPassword);
+  }, []);
+
+  const clearRecovery = useCallback(() => {
+    setRecoveryToken(null);
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+
+    const openRecovery = (accessToken: string) => {
+      setRecoveryToken(accessToken);
+      setIsAuthenticated(false);
+    };
+
+    const subscription = Linking.addEventListener('url', (event: { url: string }) => {
+      const url = event.url;
+      const link = readAuthLink(url);
+      if (!link.accessToken) return;
+      if (link.type === 'recovery') {
+        openRecovery(link.accessToken);
+        return;
+      }
+      void establishSession(link.accessToken, link.refreshToken);
+    });
+
+    (async () => {
+      try {
+        const initialUrl = await Linking.getInitialURL();
+        const initialLink = initialUrl ? readAuthLink(initialUrl) : null;
+        if (initialLink?.type === 'recovery' && initialLink.accessToken) {
+          if (active) openRecovery(initialLink.accessToken);
+          return;
+        }
+        if (initialLink?.accessToken) {
+          await establishSession(initialLink.accessToken, initialLink.refreshToken);
+          return;
+        }
+        const token = await getAccessToken();
+        if (!token) return;
+        const me = await authApi.getMe();
+        if (!active) return;
+        setUser((prev) => applyAuthUser(prev, me.user, me.profile));
+        setIsAuthenticated(true);
+      } catch {
+        await clearSession();
+        if (active) setIsAuthenticated(false);
+      } finally {
+        if (active) setAuthReady(true);
+      }
+    })();
+
+    return () => {
+      active = false;
+      subscription.remove();
+    };
+  }, [establishSession]);
+
+  const importStatement = (statement: BankStatement) => {
+    setTransactions((prev) => [...statement.transactions, ...prev]);
+    setConnectedAccounts((prev) =>
+      prev.map((acc) =>
+        acc.id === statement.accountId
+          ? { ...acc, balance: statement.newBalance }
+          : acc
+      )
+    );
   };
 
-  const updateUser = (patch: Partial<UserProfile>) => {
+  const updateUser = useCallback(async (patch: Partial<UserProfile>) => {
+    const fullName = `${patch.firstName || ''} ${patch.lastName || ''}`.trim();
+    await authApi.updateProfile({
+      fullName,
+      email: patch.email,
+    });
     setUser((prev) => ({ ...prev, ...patch }));
-  };
+  }, []);
 
   const addTransaction = (input: Partial<Transaction> & { type?: string }) => {
     const type = (input.type as Transaction['type']) || 'expense';
@@ -366,7 +571,9 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
 
   const value = useMemo<AppStoreValue>(
     () => ({
+      authReady,
       isAuthenticated,
+      recoveryToken,
       user,
       accounts,
       connectedAccounts,
@@ -380,7 +587,13 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
       subscriptions,
       login,
       signup,
+      verifySignupCode,
+      resendSignupCode,
       logout,
+      forgotPassword,
+      resetPassword,
+      changePassword,
+      clearRecovery,
       updateUser,
       addTransaction,
       updateTransaction,
@@ -402,10 +615,23 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
       addTransfer,
       markNotificationRead,
       markAllNotificationsRead,
+      importStatement,
     }),
     [
+      authReady,
       isAuthenticated,
+      recoveryToken,
       user,
+      login,
+      signup,
+      verifySignupCode,
+      resendSignupCode,
+      logout,
+      forgotPassword,
+      resetPassword,
+      changePassword,
+      clearRecovery,
+      updateUser,
       accounts,
       connectedAccounts,
       transactions,

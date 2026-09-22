@@ -3,11 +3,11 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   TouchableOpacity,
   StatusBar,
   Alert
 } from 'react-native';
+import { ScreenScrollView } from '../../components/common/ScreenScroll';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../theme/ThemeContext';
 import Card from '../../components/common/Card';
@@ -96,9 +96,9 @@ const LoanDetailScreen: React.FC<LoanDetailScreenProps> = ({ navigation, route }
         <View style={styles.headerSpacer} />
       </View>
 
-      <ScrollView
+      <ScreenScrollView
         style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: 156 }]}
         showsVerticalScrollIndicator={false}
       >
         {/* Remaining Amount */}
@@ -270,7 +270,7 @@ const LoanDetailScreen: React.FC<LoanDetailScreenProps> = ({ navigation, route }
         </View>
 
         <View style={{ height: 40 }} />
-      </ScrollView>
+      </ScreenScrollView>
     </View>
   );
 };

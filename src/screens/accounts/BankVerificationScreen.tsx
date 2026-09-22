@@ -3,7 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   TouchableOpacity,
   StatusBar,
   KeyboardAvoidingView,
@@ -11,6 +10,7 @@ import {
   Modal,
   ActivityIndicator
 } from 'react-native';
+import { ScreenScrollView } from '../../components/common/ScreenScroll';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../theme/ThemeContext';
 import { spacing, borderRadius } from '../../theme/spacing';
@@ -84,9 +84,9 @@ const BankVerificationScreen: React.FC<BankVerificationScreenProps> = ({
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <ScrollView
+        <ScreenScrollView
           style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[styles.scrollContent, { paddingBottom: 156 }]}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
@@ -210,7 +210,7 @@ const BankVerificationScreen: React.FC<BankVerificationScreenProps> = ({
               </View>
             </TouchableOpacity>
           </View>
-        </ScrollView>
+        </ScreenScrollView>
 
         {/* Bottom Actions */}
         <View style={[styles.bottomBar, { backgroundColor: colors.background, borderTopColor: colors.border }]}>

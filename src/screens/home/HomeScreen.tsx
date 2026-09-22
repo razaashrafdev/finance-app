@@ -3,11 +3,11 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   TouchableOpacity,
   Dimensions,
   StatusBar
 } from 'react-native';
+import { ScreenScrollView } from '../../components/common/ScreenScroll';
 import { Svg, Rect, Text as SvgText, G, Line } from 'react-native-svg';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useTheme } from '../../theme/ThemeContext';
@@ -551,9 +551,9 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
         barStyle={theme.dark ? 'light-content' : 'dark-content'}
         backgroundColor={theme.colors.background}
       />
-      <ScrollView
+      <ScreenScrollView
         style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: 156 }]}
         showsVerticalScrollIndicator={false}
       >
         {/* Header */}
@@ -643,7 +643,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Spending Breakdown</Text>
           </View>
-          <ScrollView
+          <ScreenScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.spendingScroll}
@@ -680,7 +680,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                 </View>
               );
             })}
-          </ScrollView>
+          </ScreenScrollView>
         </View>
 
         {/* Recent Transactions */}
@@ -749,7 +749,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
               <Text style={styles.seeAllText}>See All</Text>
             </TouchableOpacity>
           </View>
-          <ScrollView
+          <ScreenScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.goalScroll}
@@ -789,7 +789,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                 </TouchableOpacity>
               );
             })}
-          </ScrollView>
+          </ScreenScrollView>
         </View>
 
         {/* Budget Status */}
@@ -840,7 +840,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
             );
           })}
         </View>
-      </ScrollView>
+      </ScreenScrollView>
     </View>
   );
 };

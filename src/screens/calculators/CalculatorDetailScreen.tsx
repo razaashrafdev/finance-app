@@ -3,11 +3,11 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   TouchableOpacity,
   StatusBar,
   TextInput
 } from 'react-native';
+import { ScreenScrollView } from '../../components/common/ScreenScroll';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../theme/ThemeContext';
 import Card from '../../components/common/Card';
@@ -247,9 +247,9 @@ const CalculatorDetailScreen: React.FC<CalculatorDetailScreenProps> = ({ navigat
         <View style={styles.headerSpacer} />
       </View>
 
-      <ScrollView
+      <ScreenScrollView
         style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: 156 }]}
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.section}>
@@ -347,7 +347,7 @@ const CalculatorDetailScreen: React.FC<CalculatorDetailScreenProps> = ({ navigat
         </View>
 
         <View style={{ height: 40 }} />
-      </ScrollView>
+      </ScreenScrollView>
     </View>
   );
 };

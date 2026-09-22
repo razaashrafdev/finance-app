@@ -3,10 +3,10 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   TouchableOpacity,
   StatusBar
 } from 'react-native';
+import { ScreenScrollView } from '../../components/common/ScreenScroll';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../theme/ThemeContext';
 import { categories } from '../../data/mockData';
@@ -151,8 +151,8 @@ const ExpenseDetailScreen: React.FC<ExpenseDetailProps> = ({ route, navigation }
         <View style={styles.headerRight} />
       </View>
 
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
+      <ScreenScrollView
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: 156 }]}
         showsVerticalScrollIndicator={false}
       >
         <View style={[styles.iconContainer, { backgroundColor: '#FEE2E2' }]}>
@@ -265,7 +265,7 @@ const ExpenseDetailScreen: React.FC<ExpenseDetailProps> = ({ route, navigation }
             </Text>
           </Card>
         )}
-      </ScrollView>
+      </ScreenScrollView>
 
       <View
         style={[

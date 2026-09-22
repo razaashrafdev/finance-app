@@ -3,10 +3,10 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   TouchableOpacity,
   StatusBar
 } from 'react-native';
+import { ScreenScrollView } from '../../components/common/ScreenScroll';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../theme/ThemeContext';
 import { spacing, borderRadius } from '../../theme/spacing';
@@ -81,9 +81,9 @@ const AddAccountScreen: React.FC<AddAccountScreenProps> = ({ navigation }) => {
         <View style={styles.headerSpacer} />
       </View>
 
-      <ScrollView
+      <ScreenScrollView
         style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: 156 }]}
         showsVerticalScrollIndicator={false}
       >
         {/* Hero Option - Connect Bank */}
@@ -153,7 +153,7 @@ const AddAccountScreen: React.FC<AddAccountScreenProps> = ({ navigation }) => {
             </Text>
           </View>
         </View>
-      </ScrollView>
+      </ScreenScrollView>
 
       {/* Manual Account Bottom Sheet */}
       <BottomSheet

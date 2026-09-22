@@ -3,12 +3,12 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   TouchableOpacity,
   StatusBar,
   TextInput,
   ActivityIndicator
 } from 'react-native';
+import { ScreenScrollView } from '../../components/common/ScreenScroll';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../theme/ThemeContext';
 import { formatCurrency, formatDate } from '../../utils/format';
@@ -27,24 +27,63 @@ interface ProfileScreenProps {
 const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
   const { colors, isDark } = useTheme();
   const toast = useToast();
-  const { user: userProfile, updateUser } = useAppStore();
+  const { user: userProfile, updateUser, changePassword } = useAppStore();
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [changePasswordVisible, setChangePasswordVisible] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
+  const [passwordLoading, setPasswordLoading] = useState(false);
 
   const [firstName, setFirstName] = useState(userProfile.firstName);
   const [lastName, setLastName] = useState(userProfile.lastName);
   const [email, setEmail] = useState(userProfile.email);
   const [phone, setPhone] = useState(userProfile.phone);
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    if (!firstName.trim()) {
+      toast.show('First name is required', 'error');
+      return;
+    }
     setLoading(true);
-    setTimeout(() => {
-      updateUser({ firstName, lastName, email, phone });
-      setLoading(false);
+    try {
+      await updateUser({ firstName: firstName.trim(), lastName: lastName.trim(), email: email.trim(), phone });
       setIsEditing(false);
       toast.show('Profile updated successfully', 'success');
-    }, 400);
+    } catch (err) {
+      toast.show(err instanceof Error ? err.message : 'Could not update profile', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleChangePassword = async () => {
+    if (!currentPassword || !newPassword) {
+      toast.show('Enter your current and new password', 'error');
+      return;
+    }
+    if (newPassword.length < 6) {
+      toast.show('New password must be at least 6 characters', 'error');
+      return;
+    }
+    if (newPassword !== confirmNewPassword) {
+      toast.show('Passwords do not match', 'error');
+      return;
+    }
+    setPasswordLoading(true);
+    try {
+      await changePassword(currentPassword, newPassword);
+      setChangePasswordVisible(false);
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmNewPassword('');
+      toast.show('Password updated successfully', 'success');
+    } catch (err) {
+      toast.show(err instanceof Error ? err.message : 'Could not update password', 'error');
+    } finally {
+      setPasswordLoading(false);
+    }
   };
 
   const handleCancel = () => {
@@ -105,9 +144,9 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
         <View style={styles.headerSpacer} />
       </View>
 
-      <ScrollView
+      <ScreenScrollView
         style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: 156 }]}
         showsVerticalScrollIndicator={false}
       >
         {/* Avatar Section */}
@@ -240,7 +279,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
         </View>
 
         <View style={{ height: 40 }} />
-      </ScrollView>
+      </ScreenScrollView>
 
       {/* Change Password Bottom Sheet */}
       <BottomSheet
@@ -254,6 +293,8 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
             style={[styles.passwordInput, { color: colors.text, backgroundColor: colors.inputBg, borderColor: colors.inputBorder }]}
             secureTextEntry
             placeholderTextColor={colors.textTertiary}
+            value={currentPassword}
+            onChangeText={setCurrentPassword}
           />
 
           <Text style={[styles.inputLabel, { color: colors.textSecondary, marginTop: spacing.lg }]}>
@@ -263,6 +304,8 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
             style={[styles.passwordInput, { color: colors.text, backgroundColor: colors.inputBg, borderColor: colors.inputBorder }]}
             secureTextEntry
             placeholderTextColor={colors.textTertiary}
+            value={newPassword}
+            onChangeText={setNewPassword}
           />
 
           <Text style={[styles.inputLabel, { color: colors.textSecondary, marginTop: spacing.lg }]}>
@@ -272,14 +315,14 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
             style={[styles.passwordInput, { color: colors.text, backgroundColor: colors.inputBg, borderColor: colors.inputBorder }]}
             secureTextEntry
             placeholderTextColor={colors.textTertiary}
+            value={confirmNewPassword}
+            onChangeText={setConfirmNewPassword}
           />
 
           <Button
             title="Update Password"
-            onPress={() => {
-              setChangePasswordVisible(false);
-              toast.show('Password updated successfully', 'success');
-            }}
+            loading={passwordLoading}
+            onPress={handleChangePassword}
             style={styles.passwordButton}
           />
         </View>

@@ -3,12 +3,12 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   TouchableOpacity,
   StatusBar,
   Animated,
   Easing
 } from 'react-native';
+import { ScreenScrollView } from '../../components/common/ScreenScroll';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../theme/ThemeContext';
 import { spacing, borderRadius } from '../../theme/spacing';
@@ -94,9 +94,9 @@ const BankConnectedScreen: React.FC<BankConnectedScreenProps> = ({
         <View style={styles.headerSpacer} />
       </View>
 
-      <ScrollView
+      <ScreenScrollView
         style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: 156 }]}
         showsVerticalScrollIndicator={false}
       >
         {/* Step Indicator */}
@@ -209,7 +209,7 @@ const BankConnectedScreen: React.FC<BankConnectedScreenProps> = ({
             ))}
           </View>
         </Animated.View>
-      </ScrollView>
+      </ScreenScrollView>
 
       {/* Bottom Actions */}
       <View style={[styles.bottomBar, { backgroundColor: colors.background, borderTopColor: colors.border }]}>

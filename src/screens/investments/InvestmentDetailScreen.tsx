@@ -3,11 +3,11 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   TouchableOpacity,
   StatusBar,
   Alert
 } from 'react-native';
+import { ScreenScrollView } from '../../components/common/ScreenScroll';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../theme/ThemeContext';
 import Card from '../../components/common/Card';
@@ -120,9 +120,9 @@ const InvestmentDetailScreen: React.FC<InvestmentDetailScreenProps> = ({ navigat
         <View style={styles.headerSpacer} />
       </View>
 
-      <ScrollView
+      <ScreenScrollView
         style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: 156 }]}
         showsVerticalScrollIndicator={false}
       >
         <Card variant="elevated" style={styles.priceCard}>
@@ -269,7 +269,7 @@ const InvestmentDetailScreen: React.FC<InvestmentDetailScreenProps> = ({ navigat
         </View>
 
         <View style={{ height: 40 }} />
-      </ScrollView>
+      </ScreenScrollView>
     </View>
   );
 };

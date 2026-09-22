@@ -3,11 +3,11 @@ import {
   View,
   Text,
   StyleSheet,
-  FlatList,
   TouchableOpacity,
   RefreshControl,
   StatusBar
 } from 'react-native';
+import { ScreenFlatList } from '../../components/common/ScreenScroll';
 import { useTheme } from '../../theme/ThemeContext';
 import { useAppStore } from '../../store/AppStore';
 import { categoryList } from '../../data/mockData';
@@ -275,7 +275,7 @@ const TransactionsListScreen: React.FC = () => {
   );
 
   const renderList = () => (
-    <FlatList
+    <ScreenFlatList
       data={filteredTransactions}
       renderItem={renderItem}
       keyExtractor={(item) => item.id}
@@ -287,7 +287,7 @@ const TransactionsListScreen: React.FC = () => {
           icon="receipt-outline"
         />
       }
-      contentContainerStyle={styles.listContent}
+      contentContainerStyle={[styles.listContent, { paddingBottom: 156 }]}
       showsVerticalScrollIndicator={false}
       refreshControl={
         <RefreshControl

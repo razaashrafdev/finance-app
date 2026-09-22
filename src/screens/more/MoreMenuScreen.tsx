@@ -3,10 +3,10 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   TouchableOpacity,
   StatusBar
 } from 'react-native';
+import { ScreenScrollView } from '../../components/common/ScreenScroll';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../theme/ThemeContext';
 import { spacing, borderRadius } from '../../theme/spacing';
@@ -129,6 +129,13 @@ const MoreMenuScreen: React.FC<MoreMenuScreenProps> = ({ navigation }) => {
           screen: 'SettingsScreen',
         },
         {
+          id: 'importStatement',
+          title: 'Import Statement',
+          icon: 'document-text-outline',
+          iconColor: '#0EA5E9',
+          screen: 'BankStatement',
+        },
+        {
           id: 'accounts',
           title: 'Accounts',
           icon: 'business-outline',
@@ -142,9 +149,9 @@ const MoreMenuScreen: React.FC<MoreMenuScreenProps> = ({ navigation }) => {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
-      <ScrollView
+      <ScreenScrollView
         style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: 156 }]}
         showsVerticalScrollIndicator={false}
       >
         {/* Header */}
@@ -206,7 +213,7 @@ const MoreMenuScreen: React.FC<MoreMenuScreenProps> = ({ navigation }) => {
             </View>
           </View>
         ))}
-      </ScrollView>
+      </ScreenScrollView>
     </View>
   );
 };
@@ -264,22 +271,22 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
   },
-  section: {
-    marginTop: spacing.sectionGap,
-    paddingHorizontal: spacing.lg,
-  },
-  sectionTitle: {
-    fontSize: 13,
-    fontWeight: '600',
-    letterSpacing: 0.5,
-    marginBottom: spacing.md,
-  },
-  sectionCard: {
-    borderRadius: borderRadius.lg,
-    borderWidth: 1,
-    overflow: 'hidden',
-  },
-  menuItem: {
+   section: {
+     marginTop: spacing.sectionGap,
+     paddingHorizontal: spacing.lg,
+   },
+   sectionTitle: {
+     fontSize: 13,
+     fontWeight: '600',
+     letterSpacing: 0.5,
+     marginBottom: spacing.md,
+   },
+   sectionCard: {
+     borderRadius: borderRadius.lg,
+     borderWidth: 1,
+     overflow: 'hidden',
+   },
+   menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: spacing.md,

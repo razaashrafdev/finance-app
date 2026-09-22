@@ -3,12 +3,12 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   TouchableOpacity,
   StatusBar,
   RefreshControl,
   Animated
 } from 'react-native';
+import { ScreenScrollView } from '../../components/common/ScreenScroll';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../theme/ThemeContext';
 import { notifications as mockNotifications } from '../../data/mockData';
@@ -148,9 +148,9 @@ const NotificationsScreen: React.FC<NotificationsScreenProps> = ({ navigation })
         </TouchableOpacity>
       </View>
 
-      <ScrollView
+      <ScreenScrollView
         style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: 156 }]}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
@@ -167,7 +167,7 @@ const NotificationsScreen: React.FC<NotificationsScreenProps> = ({ navigation })
         )}
 
         {/* Filter Tabs */}
-        <ScrollView
+        <ScreenScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
           style={styles.filterScroll}
@@ -198,7 +198,7 @@ const NotificationsScreen: React.FC<NotificationsScreenProps> = ({ navigation })
               </Text>
             </TouchableOpacity>
           ))}
-        </ScrollView>
+        </ScreenScrollView>
 
         {/* Notifications List */}
         {filtered.length === 0 ? (
@@ -274,7 +274,7 @@ const NotificationsScreen: React.FC<NotificationsScreenProps> = ({ navigation })
             })}
           </View>
         )}
-      </ScrollView>
+      </ScreenScrollView>
     </View>
   );
 };

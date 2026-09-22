@@ -25,12 +25,22 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const handleLogin = async () => {
+    if (!email.trim() || !password) {
+      setError('Email and password are required');
+      return;
+    }
     setLoading(true);
-    await new Promise((resolve) => setTimeout(resolve, 400));
-    login(email, password);
-    setLoading(false);
+    setError('');
+    try {
+      await login(email, password);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Sign in failed');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -66,7 +76,10 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
                   placeholder="Enter your email"
                   placeholderTextColor={colors.textSecondary}
                   value={email}
-                  onChangeText={setEmail}
+                  onChangeText={(value) => {
+                    setEmail(value);
+                    setError('');
+                  }}
                   keyboardType="email-address"
                   autoCapitalize="none"
                 />
@@ -90,7 +103,10 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
                   placeholder="Enter your password"
                   placeholderTextColor={colors.textSecondary}
                   value={password}
-                  onChangeText={setPassword}
+                  onChangeText={(value) => {
+                    setPassword(value);
+                    setError('');
+                  }}
                   secureTextEntry={!showPassword}
                 />
                 <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
@@ -102,6 +118,8 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
                 </TouchableOpacity>
               </View>
             </View>
+
+            {error ? <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text> : null}
 
             <TouchableOpacity
               onPress={() => navigation.navigate('ForgotPassword')}

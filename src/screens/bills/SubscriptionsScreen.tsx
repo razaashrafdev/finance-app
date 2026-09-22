@@ -3,11 +3,11 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   TouchableOpacity,
   StatusBar,
   TextInput
 } from 'react-native';
+import { ScreenScrollView } from '../../components/common/ScreenScroll';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../theme/ThemeContext';
 import { formatCurrency, formatShortDate } from '../../utils/format';
@@ -74,9 +74,9 @@ const SubscriptionsScreen: React.FC<SubscriptionsScreenProps> = ({ navigation })
         <View style={styles.headerSpacer} />
       </View>
 
-      <ScrollView
+      <ScreenScrollView
         style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: 156 }]}
         showsVerticalScrollIndicator={false}
       >
         {/* Monthly Cost Summary */}
@@ -195,7 +195,7 @@ const SubscriptionsScreen: React.FC<SubscriptionsScreenProps> = ({ navigation })
             })
           )}
         </View>
-      </ScrollView>
+      </ScreenScrollView>
 
       {/* Add Subscription Button */}
       <View style={[styles.footer, { backgroundColor: colors.background, borderTopColor: colors.border }]}>

@@ -3,13 +3,13 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   TouchableOpacity,
   TextInput,
   StatusBar,
   Switch,
   Alert
 } from 'react-native';
+import { ScreenScrollView } from '../../components/common/ScreenScroll';
 import { useTheme } from '../../theme/ThemeContext';
 import { categoryList } from '../../data/mockData';
 import { useAppStore } from '../../store/AppStore';
@@ -367,8 +367,8 @@ const AddTransactionScreen: React.FC<AddTransactionProps> = ({ navigation }) => 
         <View style={styles.headerRight} />
       </View>
 
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
+      <ScreenScrollView
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: 156 }]}
         showsVerticalScrollIndicator={false}
       >
         {renderTypeSelector()}
@@ -378,7 +378,7 @@ const AddTransactionScreen: React.FC<AddTransactionProps> = ({ navigation }) => 
         {renderDatePicker()}
         {renderNotesInput()}
         {renderRecurringToggle()}
-      </ScrollView>
+      </ScreenScrollView>
 
       <View style={[styles.footer, { backgroundColor: colors.background, borderTopColor: colors.border }]}>
         <Button

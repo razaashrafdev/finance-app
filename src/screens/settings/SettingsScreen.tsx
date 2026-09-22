@@ -3,11 +3,11 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   TouchableOpacity,
   StatusBar,
   Switch
 } from 'react-native';
+import { ScreenScrollView } from '../../components/common/ScreenScroll';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../theme/ThemeContext';
 import { useAppStore } from '../../store/AppStore';
@@ -358,9 +358,9 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
         <View style={styles.headerSpacer} />
       </View>
 
-      <ScrollView
+      <ScreenScrollView
         style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: 156 }]}
         showsVerticalScrollIndicator={false}
       >
         {sections.map((section) => (
@@ -420,7 +420,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
             )}
           </View>
         ))}
-      </ScrollView>
+      </ScreenScrollView>
 
       {/* Generic Bottom Sheet */}
       <BottomSheet visible={sheetVisible} onClose={() => setSheetVisible(false)} title={sheetTitle}>

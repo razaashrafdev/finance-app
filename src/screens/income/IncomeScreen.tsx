@@ -3,10 +3,10 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   TouchableOpacity,
   StatusBar
 } from 'react-native';
+import { ScreenScrollView } from '../../components/common/ScreenScroll';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../theme/ThemeContext';
 import { useAppStore } from '../../store/AppStore';
@@ -102,13 +102,13 @@ const IncomeScreen: React.FC<IncomeScreenProps> = ({ navigation }) => {
         <View style={styles.headerSpacer} />
       </View>
 
-      <ScrollView
+      <ScreenScrollView
         style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: 156 }]}
         showsVerticalScrollIndicator={false}
       >
         {/* Date Range Filter */}
-        <ScrollView
+        <ScreenScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.filterContainer}
@@ -138,7 +138,7 @@ const IncomeScreen: React.FC<IncomeScreenProps> = ({ navigation }) => {
               </Text>
             </TouchableOpacity>
           ))}
-        </ScrollView>
+        </ScreenScrollView>
 
         {/* Total Income Card */}
         <View style={[styles.totalCard, { backgroundColor: colors.primary }]}>
@@ -256,7 +256,7 @@ const IncomeScreen: React.FC<IncomeScreenProps> = ({ navigation }) => {
         </View>
 
         <View style={{ height: 100 }} />
-      </ScrollView>
+      </ScreenScrollView>
 
       {/* FAB */}
       <TouchableOpacity

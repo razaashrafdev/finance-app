@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import   { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   Dimensions,
   TouchableOpacity,
 } from 'react-native';
+import { ScreenFlatList } from '../../components/common/ScreenScroll';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../theme/ThemeContext';
 
@@ -49,7 +50,7 @@ export default function OnboardingScreen({ navigation }: OnboardingScreenProps) 
 
   const handleNext = () => {
     if (isLastSlide) {
-      navigation.navigate('Login');
+      navigation.replace('SignUp');
     } else {
       const nextIndex = currentIndex + 1;
       flatListRef.current?.scrollToIndex({ index: nextIndex, animated: true });
@@ -57,7 +58,7 @@ export default function OnboardingScreen({ navigation }: OnboardingScreenProps) 
   };
 
   const handleSkip = () => {
-    navigation.navigate('Login');
+    navigation.replace('SignUp');
   };
 
   const onViewableItemsChanged = useRef(({ viewableItems }: any) => {
@@ -86,7 +87,7 @@ export default function OnboardingScreen({ navigation }: OnboardingScreenProps) 
         <Text style={[styles.skipText, { color: colors.textSecondary }]}>Skip</Text>
       </TouchableOpacity>
 
-      <FlatList
+      <ScreenFlatList
         ref={flatListRef}
         data={slides}
         renderItem={renderSlide}

@@ -3,10 +3,10 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   TouchableOpacity,
   StatusBar
 } from 'react-native';
+import { ScreenScrollView } from '../../components/common/ScreenScroll';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../theme/ThemeContext';
 import { spacing, borderRadius } from '../../theme/spacing';
@@ -73,9 +73,9 @@ const BankSelectionScreen: React.FC<BankSelectionScreenProps> = ({ navigation })
         <View style={styles.headerSpacer} />
       </View>
 
-      <ScrollView
+      <ScreenScrollView
         style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: 156 }]}
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.searchContainer}>
@@ -170,7 +170,7 @@ const BankSelectionScreen: React.FC<BankSelectionScreenProps> = ({ navigation })
             Contact Support
           </Text>
         </TouchableOpacity>
-      </ScrollView>
+      </ScreenScrollView>
     </View>
   );
 };

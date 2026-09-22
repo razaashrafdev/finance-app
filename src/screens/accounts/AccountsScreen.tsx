@@ -2,11 +2,11 @@ import React from 'react';
 import {
   View,
   Text,
-  StyleSheet,
-  ScrollView,
+  StyleSheet,
   TouchableOpacity,
   StatusBar
 } from 'react-native';
+import { ScreenScrollView } from '../../components/common/ScreenScroll';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../theme/ThemeContext';
 import { availableBanks } from '../../data/mockData';
@@ -104,9 +104,9 @@ const AccountsScreen: React.FC<AccountsScreenProps> = ({ navigation }) => {
         <View style={styles.headerSpacer} />
       </View>
 
-      <ScrollView
+      <ScreenScrollView
         style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: 156 }]}
         showsVerticalScrollIndicator={false}
       >
         {/* Total Balance Card */}
@@ -119,7 +119,7 @@ const AccountsScreen: React.FC<AccountsScreenProps> = ({ navigation }) => {
             </Text>
             <View style={styles.balanceDivider} />
             <Text style={styles.balanceSubtext}>
-              Auto-sync enabled
+              Manual import only
             </Text>
           </View>
         </View>
@@ -235,7 +235,27 @@ const AccountsScreen: React.FC<AccountsScreenProps> = ({ navigation }) => {
             <Ionicons name="chevron-forward" size={18} color={colors.textTertiary} />
           </TouchableOpacity>
         </View>
-      </ScrollView>
+
+        {/* Import Bank Statement */}
+        <View style={styles.section}>
+          <TouchableOpacity
+            style={[styles.importButton, { backgroundColor: colors.primary + '10', borderColor: colors.primary + '30' }]}
+            activeOpacity={0.7}
+            onPress={() => navigation.navigate('BankStatement')}
+          >
+            <View style={[styles.importIconContainer, { backgroundColor: colors.primary + '20' }]}>
+              <Ionicons name="document-text-outline" size={28} color={colors.primary} />
+            </View>
+            <View style={styles.importTextContainer}>
+              <Text style={[styles.importTitle, { color: colors.primary }]}>Import Bank Statement</Text>
+              <Text style={[styles.importSubtitle, { color: colors.textSecondary }]}>
+                Upload PDF statement to add transactions
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color={colors.primary} />
+          </TouchableOpacity>
+        </View>
+      </ScreenScrollView>
     </View>
   );
 };
@@ -419,32 +439,58 @@ const styles = StyleSheet.create({
   syncTime: {
     fontSize: 12,
   },
-  manualCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: spacing.lg,
-    borderRadius: borderRadius.lg,
-    borderWidth: 1,
-  },
-  manualIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  manualInfo: {
-    flex: 1,
-    marginLeft: spacing.md,
-  },
-  manualTitle: {
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  manualSubtitle: {
-    fontSize: 13,
-    marginTop: 2,
-  },
-});
+manualCard: {
+     flexDirection: 'row',
+     alignItems: 'center',
+     padding: spacing.lg,
+     borderRadius: borderRadius.lg,
+     borderWidth: 1,
+   },
+   manualIcon: {
+     width: 44,
+     height: 44,
+     borderRadius: 12,
+     justifyContent: 'center',
+     alignItems: 'center',
+   },
+   manualInfo: {
+     flex: 1,
+     marginLeft: spacing.md,
+   },
+   manualTitle: {
+     fontSize: 15,
+     fontWeight: '600',
+   },
+   manualSubtitle: {
+     fontSize: 13,
+     marginTop: 2,
+   },
+   importButton: {
+     flexDirection: 'row',
+     alignItems: 'center',
+     padding: spacing.lg,
+     borderRadius: borderRadius.lg,
+     borderWidth: 1,
+   },
+   importIconContainer: {
+     width: 48,
+     height: 48,
+     borderRadius: 14,
+     justifyContent: 'center',
+     alignItems: 'center',
+   },
+   importTextContainer: {
+     flex: 1,
+     marginLeft: spacing.md,
+   },
+   importTitle: {
+     fontSize: 16,
+     fontWeight: '700',
+   },
+   importSubtitle: {
+     fontSize: 13,
+     marginTop: 2,
+   },
+ });
 
 export default AccountsScreen;

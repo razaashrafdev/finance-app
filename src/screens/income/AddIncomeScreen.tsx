@@ -3,7 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   TouchableOpacity,
   StatusBar,
   Switch,
@@ -11,6 +10,7 @@ import {
   KeyboardAvoidingView,
   Platform
 } from 'react-native';
+import { ScreenScrollView } from '../../components/common/ScreenScroll';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../theme/ThemeContext';
 import { useAppStore } from '../../store/AppStore';
@@ -84,9 +84,9 @@ const AddIncomeScreen: React.FC<AddIncomeScreenProps> = ({ navigation }) => {
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <ScrollView
+        <ScreenScrollView
           style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[styles.scrollContent, { paddingBottom: 156 }]}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
@@ -254,7 +254,7 @@ const AddIncomeScreen: React.FC<AddIncomeScreenProps> = ({ navigation }) => {
           </View>
 
           <View style={{ height: 100 }} />
-        </ScrollView>
+        </ScreenScrollView>
       </KeyboardAvoidingView>
 
       {/* Save Button */}

@@ -3,10 +3,10 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   TouchableOpacity,
   StatusBar
 } from 'react-native';
+import { ScreenScrollView } from '../../components/common/ScreenScroll';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../theme/ThemeContext';
 import Card from '../../components/common/Card';
@@ -67,9 +67,9 @@ const ReportsScreen: React.FC<ReportsScreenProps> = ({ navigation }) => {
         <View style={styles.headerSpacer} />
       </View>
 
-      <ScrollView
+      <ScreenScrollView
         style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: 156 }]}
         showsVerticalScrollIndicator={false}
       >
         <View style={[styles.dateRangeContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}>
@@ -260,7 +260,7 @@ const ReportsScreen: React.FC<ReportsScreenProps> = ({ navigation }) => {
         </View>
 
         <View style={{ height: 40 }} />
-      </ScrollView>
+      </ScreenScrollView>
     </View>
   );
 };

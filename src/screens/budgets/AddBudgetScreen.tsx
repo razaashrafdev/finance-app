@@ -3,11 +3,11 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   TouchableOpacity,
   StatusBar,
   Modal
 } from 'react-native';
+import { ScreenScrollView } from '../../components/common/ScreenScroll';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../theme/ThemeContext';
 import Card from '../../components/common/Card';
@@ -90,9 +90,9 @@ const AddBudgetScreen: React.FC<AddBudgetScreenProps> = ({ navigation, route }) 
         <View style={styles.headerSpacer} />
       </View>
 
-      <ScrollView
+      <ScreenScrollView
         style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: 156 }]}
         showsVerticalScrollIndicator={false}
       >
         {/* Category Selector */}
@@ -200,7 +200,7 @@ const AddBudgetScreen: React.FC<AddBudgetScreenProps> = ({ navigation, route }) 
             icon={<Ionicons name="checkmark-circle-outline" size={20} color="#FFFFFF" />}
           />
         </View>
-      </ScrollView>
+      </ScreenScrollView>
     </View>
   );
 };

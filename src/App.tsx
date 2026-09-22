@@ -4,7 +4,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ThemeProvider, useTheme } from './theme/ThemeContext';
 import { ToastProvider } from './components/common/Toast';
-import { AppStoreProvider } from './store/AppStore';
+import { AppStoreProvider, useAppStore } from './store/AppStore';
 import AppSplash from './components/common/AppSplash';
 import AppSafeFrame from './components/common/AppSafeFrame';
 import MainNavigator from './navigation/MainNavigator';
@@ -18,6 +18,7 @@ try {
 
 function AppContent() {
   const { isDark } = useTheme();
+  const { authReady } = useAppStore();
   const [showSplash, setShowSplash] = useState(true);
 
   useEffect(() => {
@@ -27,7 +28,7 @@ function AppContent() {
     return () => clearTimeout(timer);
   }, []);
 
-  if (showSplash) {
+  if (showSplash || !authReady) {
     return <AppSplash />;
   }
 

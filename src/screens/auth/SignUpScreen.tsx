@@ -5,11 +5,11 @@ import {
   StyleSheet,
   TextInput,
   TouchableOpacity,
-  ScrollView,
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
 } from 'react-native';
+import { ScreenScrollView } from '../../components/common/ScreenScroll';
 import { Ionicons } from '@expo/vector-icons';
 import AppLogo from '../../components/common/AppLogo';
 import { useTheme } from '../../theme/ThemeContext';
@@ -21,7 +21,7 @@ interface SignUpScreenProps {
 
 export default function SignUpScreen({ navigation }: SignUpScreenProps) {
   const { colors } = useTheme();
-  const { signup } = useAppStore();
+  const { signup, verifySignupCode, resendSignupCode } = useAppStore();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
@@ -31,13 +31,166 @@ export default function SignUpScreen({ navigation }: SignUpScreenProps) {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [agreed, setAgreed] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [verificationSent, setVerificationSent] = useState(false);
+  const [code, setCode] = useState('');
+  const [verifying, setVerifying] = useState(false);
+  const [resending, setResending] = useState(false);
+  const [notice, setNotice] = useState('');
 
   const handleSignUp = async () => {
+    if (!firstName.trim() || !email.trim() || !password) {
+      setError('First name, email, and password are required');
+      return;
+    }
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters');
+      return;
+    }
+    if (password !== confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+    if (!agreed) {
+      setError('Agree to the Terms & Conditions to continue');
+      return;
+    }
     setLoading(true);
-    await new Promise((resolve) => setTimeout(resolve, 400));
-    signup({ firstName, lastName, email, password });
-    setLoading(false);
+    setError('');
+    try {
+      const result = await signup({ firstName, lastName, email, password });
+      if (result.needsVerification) {
+        setVerificationSent(true);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Sign up failed');
+    } finally {
+      setLoading(false);
+    }
   };
+
+  const handleVerifyCode = async () => {
+    const token = code.replace(/\s/g, '');
+    if (!/^\d{6}$/.test(token)) {
+      setError('Enter the 6-digit code from your email');
+      return;
+    }
+    setVerifying(true);
+    setError('');
+    try {
+      await verifySignupCode(email, token);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not verify the code');
+    } finally {
+      setVerifying(false);
+    }
+  };
+
+  const handleResendCode = async () => {
+    setResending(true);
+    setError('');
+    setNotice('');
+    try {
+      await resendSignupCode(email);
+      setNotice('A new code is on its way.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not resend the code');
+    } finally {
+      setResending(false);
+    }
+  };
+
+  if (verificationSent) {
+    return (
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <ScreenScrollView
+          contentContainerStyle={styles.verifyScroll}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={[styles.verifyIconWrap, { backgroundColor: colors.primaryBg }]}>
+            <View style={[styles.verifyIconInner, { backgroundColor: colors.primary }]}>
+              <Ionicons name="keypad" size={32} color="#fff" />
+            </View>
+          </View>
+
+          <Text style={[styles.verifyTitle, { color: colors.text }]}>Enter your code</Text>
+          <Text style={[styles.verifySubtitle, { color: colors.textSecondary }]}>
+            We sent a 6-digit code to your email. Your account is created when the code is confirmed.
+          </Text>
+
+          <View style={[styles.emailCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <View style={[styles.emailIcon, { backgroundColor: colors.primaryBg }]}>
+              <Ionicons name="mail-outline" size={18} color={colors.primary} />
+            </View>
+            <Text style={[styles.emailValue, { color: colors.text }]} numberOfLines={1}>
+              {email.trim()}
+            </Text>
+          </View>
+
+          <TextInput
+            style={[
+              styles.codeInput,
+              {
+                color: colors.text,
+                backgroundColor: colors.card,
+                borderColor: error ? colors.error : colors.border,
+              },
+            ]}
+            value={code}
+            onChangeText={(value) => {
+              setCode(value.replace(/[^0-9]/g, '').slice(0, 6));
+              setError('');
+            }}
+            keyboardType="number-pad"
+            textContentType="oneTimeCode"
+            autoComplete="sms-otp"
+            maxLength={6}
+            placeholder="000000"
+            placeholderTextColor={colors.textTertiary}
+          />
+
+          {error ? <Text style={[styles.codeError, { color: colors.error }]}>{error}</Text> : null}
+          {notice ? <Text style={[styles.codeNotice, { color: colors.success }]}>{notice}</Text> : null}
+
+          <TouchableOpacity
+            style={[styles.signUpButton, styles.verifyButton, { backgroundColor: colors.primary }]}
+            onPress={handleVerifyCode}
+            disabled={verifying}
+            activeOpacity={0.8}
+          >
+            {verifying ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.signUpButtonText}>Create Account</Text>
+            )}
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.changeEmailButton}
+            onPress={handleResendCode}
+            disabled={resending}
+          >
+            <Text style={[styles.changeEmailText, { color: colors.primary }]}>
+              {resending ? 'Sending...' : 'Resend code'}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.changeEmailButton}
+            onPress={() => {
+              setVerificationSent(false);
+              setCode('');
+              setError('');
+              setNotice('');
+            }}
+          >
+            <Text style={[styles.changeEmailText, { color: colors.textSecondary }]}>Use a different email</Text>
+          </TouchableOpacity>
+        </ScreenScrollView>
+      </View>
+    );
+  }
 
   const renderInput = (
     label: string,
@@ -95,7 +248,7 @@ export default function SignUpScreen({ navigation }: SignUpScreenProps) {
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <ScrollView
+        <ScreenScrollView
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
@@ -164,6 +317,8 @@ export default function SignUpScreen({ navigation }: SignUpScreenProps) {
               </Text>
             </TouchableOpacity>
 
+            {error ? <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text> : null}
+
             <TouchableOpacity
               style={[styles.signUpButton, { backgroundColor: colors.primary }]}
               onPress={handleSignUp}
@@ -186,7 +341,7 @@ export default function SignUpScreen({ navigation }: SignUpScreenProps) {
               <Text style={[styles.footerLink, { color: colors.primary }]}>Sign In</Text>
             </TouchableOpacity>
           </View>
-        </ScrollView>
+        </ScreenScrollView>
       </KeyboardAvoidingView>
     </View>
   );
@@ -290,6 +445,134 @@ const styles = StyleSheet.create({
   },
   footerLink: {
     fontSize: 14,
+    fontWeight: '600',
+  },
+  verifyScroll: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+    paddingVertical: 32,
+  },
+  verifyIconWrap: {
+    width: 96,
+    height: 96,
+    borderRadius: 32,
+    alignSelf: 'center',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 24,
+  },
+  verifyIconInner: {
+    width: 68,
+    height: 68,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  verifyBadge: {
+    position: 'absolute',
+    right: 10,
+    bottom: 10,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  verifyTitle: {
+    fontSize: 28,
+    fontWeight: '700',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  verifySubtitle: {
+    fontSize: 15,
+    lineHeight: 22,
+    textAlign: 'center',
+    marginBottom: 24,
+    paddingHorizontal: 8,
+  },
+  emailCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderRadius: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    marginBottom: 14,
+    gap: 12,
+  },
+  emailIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emailValue: {
+    flex: 1,
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  codeInput: {
+    height: 64,
+    borderWidth: 1,
+    borderRadius: 16,
+    textAlign: 'center',
+    fontSize: 28,
+    fontWeight: '700',
+    letterSpacing: 10,
+    marginBottom: 12,
+  },
+  codeError: {
+    fontSize: 13,
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+  codeNotice: {
+    fontSize: 13,
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+  stepsCard: {
+    borderWidth: 1,
+    borderRadius: 16,
+    marginBottom: 28,
+    overflow: 'hidden',
+  },
+  stepRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+    gap: 12,
+  },
+  stepNumber: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stepNumberText: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  stepLabel: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  verifyButton: {
+    marginBottom: 8,
+  },
+  changeEmailButton: {
+    alignItems: 'center',
+    paddingVertical: 14,
+  },
+  changeEmailText: {
+    fontSize: 15,
     fontWeight: '600',
   },
 });

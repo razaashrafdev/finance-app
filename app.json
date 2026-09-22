@@ -3,6 +3,7 @@
     "name": "FinanceFlow",
     "slug": "finance-app",
     "version": "1.0.0",
+    "scheme": "financeflow",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -23,7 +24,8 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "icon": "./assets/icon.png",
-      "package": "com.financeflow.app"
+      "package": "com.financeflow.app",
+      "usesCleartextTraffic": true
     },
     "web": {
       "favicon": "./assets/favicon.png",
@@ -48,7 +50,12 @@
             "image": "./assets/splash-icon.png"
           }
         }
-      ]
-    ]
+      ],
+      "expo-secure-store"
+    ],
+    "extra": {
+      "supabaseUrl": "",
+      "supabaseAnonKey": ""
+    }
   }
 }

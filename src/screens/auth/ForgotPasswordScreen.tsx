@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../theme/ThemeContext';
+import { useAppStore } from '../../store/AppStore';
 
 interface ForgotPasswordScreenProps {
   navigation: any;
@@ -18,16 +19,27 @@ interface ForgotPasswordScreenProps {
 
 export default function ForgotPasswordScreen({ navigation }: ForgotPasswordScreenProps) {
   const { colors } = useTheme();
+  const { forgotPassword } = useAppStore();
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
-  const [error] = useState('');
+  const [error, setError] = useState('');
 
   const handleSend = async () => {
+    if (!email.trim()) {
+      setError('Email is required');
+      return;
+    }
     setLoading(true);
-    await new Promise((resolve) => setTimeout(resolve, 400));
-    setSent(true);
-    setLoading(false);
+    setError('');
+    try {
+      await forgotPassword(email);
+      navigation.navigate('ResetPassword', { email: email.trim() });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not send reset email');
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (sent) {
@@ -107,7 +119,10 @@ export default function ForgotPasswordScreen({ navigation }: ForgotPasswordScree
                   placeholder="Enter your email"
                   placeholderTextColor={colors.textSecondary}
                   value={email}
-                  onChangeText={setEmail}
+                  onChangeText={(value) => {
+                    setEmail(value);
+                    setError('');
+                  }}
                   keyboardType="email-address"
                   autoCapitalize="none"
                 />

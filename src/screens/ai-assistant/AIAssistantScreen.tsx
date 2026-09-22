@@ -1,4 +1,5 @@
-import React, { useState, useRef } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import {
   View,
   Text,
@@ -11,6 +12,7 @@ import {
   Platform,
   Animated
 } from 'react-native';
+import { ScreenScrollView } from '../../components/common/ScreenScroll';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../theme/ThemeContext';
 import { aiMessages, userProfile } from '../../data/mockData';
@@ -91,6 +93,15 @@ const AIAssistantScreen: React.FC<AIAssistantScreenProps> = ({ navigation }) => 
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
+  const stickToEnd = useRef(false);
+
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        stickToEnd.current = false;
+      };
+    }, []),
+  );
 
   const handleSend = (text?: string) => {
     const messageText = text || inputText.trim() || 'Tell me about my finances';
@@ -102,6 +113,7 @@ const AIAssistantScreen: React.FC<AIAssistantScreenProps> = ({ navigation }) => 
       timestamp: new Date().toISOString(),
     };
 
+    stickToEnd.current = true;
     setMessages((prev) => [...prev, userMessage]);
     setInputText('');
     setIsTyping(true);
@@ -150,14 +162,17 @@ const AIAssistantScreen: React.FC<AIAssistantScreenProps> = ({ navigation }) => 
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={0}
       >
-        <ScrollView
+        <ScreenScrollView
           ref={scrollViewRef}
           style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[styles.scrollContent, { paddingBottom: 156 }]}
           showsVerticalScrollIndicator={false}
-          onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
+          onContentSizeChange={() => {
+            if (!stickToEnd.current) return;
+            scrollViewRef.current?.scrollToEnd({ animated: true });
+          }}
         >
-          <ScrollView
+          <ScreenScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.suggestedContainer}
@@ -171,7 +186,7 @@ const AIAssistantScreen: React.FC<AIAssistantScreenProps> = ({ navigation }) => 
                 <Text style={[styles.suggestedText, { color: colors.primary }]}>{question}</Text>
               </TouchableOpacity>
             ))}
-          </ScrollView>
+          </ScreenScrollView>
 
           {messages.map((message) => (
             <View
@@ -221,7 +236,7 @@ const AIAssistantScreen: React.FC<AIAssistantScreenProps> = ({ navigation }) => 
           {isTyping && <TypingIndicator />}
 
           <View style={{ height: spacing.lg }} />
-        </ScrollView>
+        </ScreenScrollView>
 
         <View style={[styles.inputBar, { backgroundColor: colors.background, borderTopColor: colors.border }]}>
           <View style={[styles.inputContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}>

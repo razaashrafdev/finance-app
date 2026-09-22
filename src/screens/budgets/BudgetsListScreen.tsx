@@ -3,10 +3,10 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   TouchableOpacity,
   StatusBar
 } from 'react-native';
+import { ScreenScrollView } from '../../components/common/ScreenScroll';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../theme/ThemeContext';
 import Card from '../../components/common/Card';
@@ -86,9 +86,9 @@ const BudgetsListScreen: React.FC<BudgetsListScreenProps> = ({ navigation }) => 
         </TouchableOpacity>
       </View>
 
-      <ScrollView
+      <ScreenScrollView
         style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: 156 }]}
         showsVerticalScrollIndicator={false}
       >
         {/* Month Selector */}
@@ -203,7 +203,7 @@ const BudgetsListScreen: React.FC<BudgetsListScreenProps> = ({ navigation }) => 
         </View>
 
         <View style={{ height: 100 }} />
-      </ScrollView>
+      </ScreenScrollView>
 
       {/* Add Budget FAB */}
       <TouchableOpacity

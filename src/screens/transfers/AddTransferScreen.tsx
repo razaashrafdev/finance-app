@@ -3,12 +3,12 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   TouchableOpacity,
   TextInput,
   StatusBar,
   Animated
 } from 'react-native';
+import { ScreenScrollView } from '../../components/common/ScreenScroll';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../theme/ThemeContext';
 import { formatCurrency, formatDate } from '../../utils/format';
@@ -373,8 +373,8 @@ const AddTransferScreen: React.FC<AddTransferProps> = ({ navigation }) => {
         <View style={styles.headerRight} />
       </View>
 
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
+      <ScreenScrollView
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: 156 }]}
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.amountContainer}>
@@ -574,7 +574,7 @@ const AddTransferScreen: React.FC<AddTransferProps> = ({ navigation }) => {
             textAlignVertical="top"
           />
         </View>
-      </ScrollView>
+      </ScreenScrollView>
 
       <View
         style={[

@@ -3,13 +3,13 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   TouchableOpacity,
   StatusBar,
   Switch,
   Animated,
   Easing
 } from 'react-native';
+import { ScreenScrollView } from '../../components/common/ScreenScroll';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../theme/ThemeContext';
 import { spacing, borderRadius } from '../../theme/spacing';
@@ -115,9 +115,9 @@ const SyncCompleteScreen: React.FC<SyncCompleteScreenProps> = ({
         <View style={styles.headerSpacer} />
       </View>
 
-      <ScrollView
+      <ScreenScrollView
         style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: 156 }]}
         showsVerticalScrollIndicator={false}
       >
         {/* Success Animation */}
@@ -315,7 +315,7 @@ const SyncCompleteScreen: React.FC<SyncCompleteScreenProps> = ({
             />
           </View>
         </Animated.View>
-      </ScrollView>
+      </ScreenScrollView>
 
       {/* Bottom Actions */}
       <View

@@ -3,10 +3,10 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   TouchableOpacity,
   StatusBar
 } from 'react-native';
+import { ScreenScrollView } from '../../components/common/ScreenScroll';
 import { useTheme } from '../../theme/ThemeContext';
 import { categories } from '../../data/mockData';
 import { useAppStore } from '../../store/AppStore';
@@ -109,8 +109,8 @@ const TransactionDetailScreen: React.FC<TransactionDetailProps> = ({ route, navi
         <View style={styles.headerRight} />
       </View>
 
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
+      <ScreenScrollView
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: 156 }]}
         showsVerticalScrollIndicator={false}
       >
         <View style={[styles.iconContainer, { backgroundColor: categoryColor + '20' }]}>
@@ -217,7 +217,7 @@ const TransactionDetailScreen: React.FC<TransactionDetailProps> = ({ route, navi
             </View>
           </View>
         )}
-      </ScrollView>
+      </ScreenScrollView>
 
       <View style={[styles.footer, { backgroundColor: colors.background, borderTopColor: colors.border }]}>
         <Button

@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { NavigationContainer, useNavigation } from '@react-navigation/native';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, useWindowDimensions } from 'react-native';
+import { NavigationContainer, createNavigationContainerRef, useNavigation } from '@react-navigation/native';
+import { BottomTabBar, BottomTabBarProps, createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { CardStyleInterpolators, TransitionPresets, createStackNavigator } from '@react-navigation/stack';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../theme/ThemeContext';
@@ -14,6 +14,7 @@ import OnboardingScreen from '../screens/onboarding/OnboardingScreen';
 import LoginScreen from '../screens/auth/LoginScreen';
 import SignUpScreen from '../screens/auth/SignUpScreen';
 import ForgotPasswordScreen from '../screens/auth/ForgotPasswordScreen';
+import ResetPasswordScreen from '../screens/auth/ResetPasswordScreen.tsx';
 
 // ─── Home Screens ──────────────────────────────────────────────
 import HomeScreen from '../screens/home/HomeScreen';
@@ -65,9 +66,14 @@ import BankConnectedScreen from '../screens/accounts/BankConnectedScreen';
 import InitialSyncScreen from '../screens/accounts/InitialSyncScreen';
 import SyncCompleteScreen from '../screens/accounts/SyncCompleteScreen';
 import SyncFailedScreen from '../screens/accounts/SyncFailedScreen';
+import BankStatementScreen from '../screens/accounts/BankStatementScreen';
 
 type RootStackParamList = {
-  OnboardingStack: undefined;
+  OnboardingStack:
+    | {
+        screen?: 'Welcome' | 'Onboarding' | 'Login' | 'SignUp' | 'ForgotPassword' | 'ResetPassword';
+      }
+    | undefined;
   MainTabs: undefined;
 };
 
@@ -77,6 +83,7 @@ type OnboardingParamList = {
   Login: undefined;
   SignUp: undefined;
   ForgotPassword: undefined;
+  ResetPassword: { email?: string } | undefined;
 };
 
 type HomeParamList = {
@@ -135,8 +142,10 @@ type MoreParamList = {
   InitialSync: { bankId: string; bankName: string; bankColor: string };
   SyncComplete: { bankId: string; bankName: string; bankColor: string };
   SyncFailed: { bankId: string; bankName: string; bankColor: string };
+  BankStatement: undefined;
 };
 
+const navigationRef = createNavigationContainerRef<RootStackParamList>();
 const RootStack = createStackNavigator<RootStackParamList>();
 const OnboardingNavigator = createStackNavigator<OnboardingParamList>();
 const HomeNavigator = createStackNavigator<HomeParamList>();
@@ -174,6 +183,7 @@ function OnboardingStack() {
       <OnboardingNavigator.Screen name="Login" component={LoginScreen} />
       <OnboardingNavigator.Screen name="SignUp" component={SignUpScreen} />
       <OnboardingNavigator.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+      <OnboardingNavigator.Screen name="ResetPassword" component={ResetPasswordScreen} />
     </OnboardingNavigator.Navigator>
   );
 }
@@ -439,12 +449,17 @@ function MoreStack() {
         component={SyncCompleteScreen}
         options={{ title: 'Sync Complete' }}
       />
-      <MoreNavigator.Screen
-        name="SyncFailed"
-        component={SyncFailedScreen}
-        options={{ title: 'Connection Failed' }}
-      />
-    </MoreNavigator.Navigator>
+<MoreNavigator.Screen
+         name="SyncFailed"
+         component={SyncFailedScreen}
+         options={{ title: 'Connection Failed' }}
+       />
+       <MoreNavigator.Screen
+         name="BankStatement"
+         component={BankStatementScreen}
+         options={{ title: 'Import Statement' }}
+       />
+     </MoreNavigator.Navigator>
   );
 }
 
@@ -520,6 +535,30 @@ function TabBarIcon({
   return <Ionicons name={name} size={size} color={color} />;
 }
 
+function FloatingTabBar(props: BottomTabBarProps) {
+  const { colors } = useTheme();
+  const { width: windowWidth } = useWindowDimensions();
+  const sideGap = 22;
+  const tabBarWidth = windowWidth - sideGap * 2;
+
+  return (
+    <View pointerEvents="box-none" style={styles.tabBarDock}>
+      <View
+        style={[
+          styles.tabBarShell,
+          {
+            width: tabBarWidth,
+            backgroundColor: colors.surface,
+            shadowColor: '#000',
+          },
+        ]}
+      >
+        <BottomTabBar {...props} />
+      </View>
+    </View>
+  );
+}
+
 // ─── Main Tabs ─────────────────────────────────────────────────
 function MainTabs() {
   const { colors } = useTheme();
@@ -528,23 +567,25 @@ function MainTabs() {
   return (
     <>
       <Tab.Navigator
+        tabBar={(props) => <FloatingTabBar {...props} />}
         screenOptions={{
           headerShown: false,
           animation: 'shift',
+          tabBarHideOnKeyboard: true,
           tabBarActiveTintColor: colors.tabActive,
           tabBarInactiveTintColor: colors.tabInactive,
           tabBarStyle: {
-            backgroundColor: colors.surface,
-            borderTopColor: colors.border,
-            borderTopWidth: 0.5,
-            height: 64,
-            paddingTop: 6,
+            backgroundColor: 'transparent',
+            borderTopWidth: 0,
+            elevation: 0,
+            shadowOpacity: 0,
+            height: 70,
+            paddingTop: 8,
             paddingBottom: 8,
-            shadowColor: colors.shadow,
-            shadowOffset: { width: 0, height: -2 },
-            shadowOpacity: 0.1,
-            shadowRadius: 8,
-            elevation: 12,
+            overflow: 'visible',
+          },
+          tabBarItemStyle: {
+            paddingVertical: 2,
           },
           tabBarLabelStyle: {
             fontSize: 11,
@@ -586,7 +627,7 @@ function MainTabs() {
                 onPress={() => setAddSheetVisible(true)}
               >
                 <View style={[styles.addButtonInner, { backgroundColor: colors.primary }]}>
-                  <Ionicons name="add" size={30} color="#FFFFFF" />
+                  <Ionicons name="add" size={32} color="#FFFFFF" />
                 </View>
               </TouchableOpacity>
             ),
@@ -630,10 +671,22 @@ function MainTabs() {
 
 // ─── Main Navigator ────────────────────────────────────────────
 export default function MainNavigator() {
-  const { isAuthenticated } = useAppStore();
+  const { isAuthenticated, recoveryToken } = useAppStore();
+
+  useEffect(() => {
+    if (isAuthenticated || !recoveryToken || !navigationRef.isReady()) return;
+    navigationRef.navigate('OnboardingStack', { screen: 'ResetPassword' });
+  }, [isAuthenticated, recoveryToken]);
 
   return (
-    <NavigationContainer>
+    <NavigationContainer
+      ref={navigationRef}
+      onReady={() => {
+        if (!isAuthenticated && recoveryToken && navigationRef.isReady()) {
+          navigationRef.navigate('OnboardingStack', { screen: 'ResetPassword' });
+        }
+      }}
+    >
       <RootStack.Navigator
         screenOptions={{
           headerShown: false,
@@ -652,23 +705,38 @@ export default function MainNavigator() {
 
 // ─── Styles ────────────────────────────────────────────────────
 const styles = StyleSheet.create({
+  tabBarDock: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 16,
+    alignItems: 'center',
+  },
+  tabBarShell: {
+    borderRadius: 32,
+    overflow: 'visible',
+    elevation: 16,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+  },
   addButton: {
-    top: -20,
+    flex: 1,
+    top: -28,
     justifyContent: 'center',
     alignItems: 'center',
-    alignSelf: 'center',
   },
   addButtonInner: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 58,
+    height: 58,
+    borderRadius: 29,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 6,
+    shadowColor: '#4F46E5',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.28,
+    shadowRadius: 10,
+    elevation: 10,
   },
 });
 

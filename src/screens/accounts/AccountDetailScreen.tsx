@@ -3,13 +3,13 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   TouchableOpacity,
   StatusBar,
   Switch,
   Alert,
   ActivityIndicator
 } from 'react-native';
+import { ScreenScrollView } from '../../components/common/ScreenScroll';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../theme/ThemeContext';
 import { syncTransactions, availableBanks, categories } from '../../data/mockData';
@@ -171,9 +171,9 @@ const AccountDetailScreen: React.FC<AccountDetailScreenProps> = ({
         </TouchableOpacity>
       </View>
 
-      <ScrollView
+      <ScreenScrollView
         style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: 156 }]}
         showsVerticalScrollIndicator={false}
       >
         {/* ─── Account Hero Card ───────────────────────────────── */}
@@ -727,7 +727,7 @@ const AccountDetailScreen: React.FC<AccountDetailScreenProps> = ({
         </View>
 
         <View style={styles.bottomSpacer} />
-      </ScrollView>
+      </ScreenScrollView>
 
       {/* ─── Options Bottom Sheet ──────────────────────────────── */}
       <BottomSheet

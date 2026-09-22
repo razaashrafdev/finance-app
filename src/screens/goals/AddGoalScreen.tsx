@@ -3,10 +3,10 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   TouchableOpacity,
   StatusBar
 } from 'react-native';
+import { ScreenScrollView } from '../../components/common/ScreenScroll';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../theme/ThemeContext';
 import Button from '../../components/common/Button';
@@ -110,9 +110,9 @@ const AddGoalScreen: React.FC<AddGoalScreenProps> = ({ navigation, route }) => {
         <View style={styles.headerSpacer} />
       </View>
 
-      <ScrollView
+      <ScreenScrollView
         style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: 156 }]}
         showsVerticalScrollIndicator={false}
       >
         {/* Goal Name */}
@@ -256,7 +256,7 @@ const AddGoalScreen: React.FC<AddGoalScreenProps> = ({ navigation, route }) => {
         </View>
 
         <View style={{ height: 60 }} />
-      </ScrollView>
+      </ScreenScrollView>
     </View>
   );
 };
