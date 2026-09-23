@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { ScreenScrollView } from '../../components/common/ScreenScroll';
 import { useTheme } from '../../theme/ThemeContext';
-import { categoryList } from '../../data/mockData';
+import { resolveCategoryList } from '../../data/categories';
 import { useAppStore } from '../../store/AppStore';
 import { useToast } from '../../components/common/Toast';
 import { formatCurrency } from '../../utils/format';
@@ -47,7 +47,8 @@ const accounts = [
 
 const EditTransactionScreen: React.FC<EditTransactionProps> = ({ route, navigation }) => {
   const { colors, isDark } = useTheme();
-  const { transactions, updateTransaction, deleteTransaction } = useAppStore();
+  const { transactions, updateTransaction, deleteTransaction, categories: storeCategories } = useAppStore();
+  const categoryList = resolveCategoryList(storeCategories);
   const toast = useToast();
 
   const transactionId = route?.params?.transactionId;

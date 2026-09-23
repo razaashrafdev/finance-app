@@ -1,32 +1,27 @@
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { Linking } from 'react-native';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { AppState, Linking } from 'react-native';
 import * as authApi from '../api/auth';
 import { readAuthLink } from '../auth/links';
-import { clearSession, getAccessToken, saveSession } from '../storage/session';
+import { clearSession, getAccessToken, saveSession, savePendingSignup, getPendingSignup, clearPendingSignup, saveDrivePromptPending, getDrivePromptAgeMs, clearDrivePromptPending } from '../storage/session';
 import {
-  userProfile as mockUser,
-  accounts as mockAccounts,
-  connectedAccounts as mockConnectedAccounts,
-  transactions as mockTransactions,
-  budgets as mockBudgets,
-  savingsGoals as mockGoals,
-  bills as mockBills,
-  loans as mockLoans,
-  investments as mockInvestments,
-  notifications as mockNotifications,
-  subscriptions as mockSubscriptions,
-} from '../data/mockData';
+  createEmptyCanonicalState,
+  mapToCanonicalState,
+  canonicalToAppStore,
+  appStoreToCanonical,
+  createDefaultUser,
+} from '../data/canonicalState';
 
-type UserProfile = typeof mockUser;
-type Account = (typeof mockAccounts)[number];
-type Transaction = (typeof mockTransactions)[number];
-type Budget = (typeof mockBudgets)[number];
-type Goal = (typeof mockGoals)[number];
-type Bill = (typeof mockBills)[number];
-type Loan = (typeof mockLoans)[number];
-type Investment = (typeof mockInvestments)[number];
-type NotificationItem = (typeof mockNotifications)[number];
-type Subscription = (typeof mockSubscriptions)[number];
+type UserProfile = ReturnType<typeof createDefaultUser>;
+type Account = any;
+type Transaction = any;
+type Budget = any;
+type Goal = any;
+type Bill = any;
+type Loan = any;
+type Investment = any;
+type NotificationItem = any;
+type Subscription = any;
+type ConnectedAccount = any;
 
 type BankStatement = {
   accountId: string;
@@ -49,15 +44,8 @@ function asNumber(value: unknown, fallback = 0) {
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
-function blankUser(base: UserProfile): UserProfile {
-  return {
-    ...base,
-    firstName: '',
-    lastName: '',
-    email: '',
-    phone: '',
-    avatar: '',
-  };
+function blankUser(): UserProfile {
+  return createDefaultUser();
 }
 
 function splitName(fullName: string, email: string) {
@@ -89,13 +77,23 @@ function applyAuthUser(
   };
 }
 
+interface DriveSyncState {
+  status: 'checking' | 'not_connected' | 'connecting' | 'loading' | 'syncing' | 'synced' | 'sync_failed' | 'reconnect_required';
+  driveConnected: boolean;
+  driveFileId: string | null;
+  driveFolderId: string | null;
+  lastSyncedAt: string | null;
+  error: string | null;
+}
+
 interface AppStoreValue {
   authReady: boolean;
   isAuthenticated: boolean;
   recoveryToken: string | null;
+  pendingSignup: { email: string; fullName: string } | null;
   user: UserProfile;
   accounts: Account[];
-  connectedAccounts: typeof mockConnectedAccounts;
+  connectedAccounts: ConnectedAccount[];
   transactions: Transaction[];
   budgets: Budget[];
   savingsGoals: Goal[];
@@ -104,6 +102,8 @@ interface AppStoreValue {
   investments: Investment[];
   notifications: NotificationItem[];
   subscriptions: Subscription[];
+  categories: Record<string, any>;
+  driveSync: DriveSyncState;
   login: (email: string, password: string) => Promise<void>;
   signup: (data: {
     firstName?: string;
@@ -113,6 +113,7 @@ interface AppStoreValue {
   }) => Promise<{ needsVerification: boolean }>;
   verifySignupCode: (email: string, code: string) => Promise<void>;
   resendSignupCode: (email: string) => Promise<void>;
+  cancelPendingSignup: () => Promise<void>;
   logout: () => Promise<void>;
   forgotPassword: (email: string) => Promise<void>;
   resetPassword: (email: string, code: string, newPassword: string) => Promise<void>;
@@ -140,35 +141,50 @@ interface AppStoreValue {
   markNotificationRead: (id: string) => void;
   markAllNotificationsRead: () => void;
   importStatement: (statement: BankStatement) => void;
+  connectDrive: () => Promise<void>;
+  loadDriveData: () => Promise<void>;
+  syncToDrive: (debounced?: boolean) => Promise<void>;
+  disconnectDrive: () => Promise<void>;
 }
 
 const AppStoreContext = createContext<AppStoreValue | null>(null);
+
+const DEBOUNCE_MS = 1500;
 
 export function AppStoreProvider({ children }: { children: React.ReactNode }) {
   const [authReady, setAuthReady] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [recoveryToken, setRecoveryToken] = useState<string | null>(null);
-  const [user, setUser] = useState<UserProfile>(() => blankUser({ ...mockUser }));
-  const [accounts, setAccounts] = useState<Account[]>(() => mockAccounts.map((item) => ({ ...item })));
-  const [connectedAccounts, setConnectedAccounts] = useState(() =>
-    mockConnectedAccounts.map((item) => ({ ...item }))
-  );
-  const [transactions, setTransactions] = useState<Transaction[]>(() =>
-    mockTransactions.map((item) => ({ ...item }))
-  );
-  const [budgets, setBudgets] = useState<Budget[]>(() => mockBudgets.map((item) => ({ ...item })));
-  const [savingsGoals, setSavingsGoals] = useState<Goal[]>(() => mockGoals.map((item) => ({ ...item })));
-  const [bills, setBills] = useState<Bill[]>(() => mockBills.map((item) => ({ ...item })));
-  const [loans, setLoans] = useState<Loan[]>(() => mockLoans.map((item) => ({ ...item })));
-  const [investments, setInvestments] = useState<Investment[]>(() =>
-    mockInvestments.map((item) => ({ ...item }))
-  );
-  const [notifications, setNotifications] = useState<NotificationItem[]>(() =>
-    mockNotifications.map((item) => ({ ...item }))
-  );
-  const [subscriptions, setSubscriptions] = useState<Subscription[]>(() =>
-    mockSubscriptions.map((item) => ({ ...item }))
-  );
+  const [pendingSignup, setPendingSignup] = useState<{ email: string; fullName: string } | null>(null);
+  const [user, setUser] = useState<UserProfile>(blankUser);
+  const [accounts, setAccounts] = useState<Account[]>([]);
+  const [connectedAccounts, setConnectedAccounts] = useState<ConnectedAccount[]>([]);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [budgets, setBudgets] = useState<Budget[]>([]);
+  const [savingsGoals, setSavingsGoals] = useState<Goal[]>([]);
+  const [bills, setBills] = useState<Bill[]>([]);
+  const [loans, setLoans] = useState<Loan[]>([]);
+  const [investments, setInvestments] = useState<Investment[]>([]);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
+  const [categories, setCategories] = useState<Record<string, any>>({});
+
+  const [driveSync, setDriveSync] = useState<DriveSyncState>({
+    status: 'checking',
+    driveConnected: false,
+    driveFileId: null,
+    driveFolderId: null,
+    lastSyncedAt: null,
+    error: null,
+  });
+
+  const syncTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isSyncingRef = useRef(false);
+  const authReadyRef = useRef(false);
+  const userIdRef = useRef<string>('');
+  const connectDriveRef = useRef<() => Promise<void>>(async () => {});
+  const driveStatusRef = useRef('checking');
+  driveStatusRef.current = driveSync.status;
 
   const establishSession = useCallback(
     async (accessToken: string, refreshToken?: string, authUser?: authApi.AuthUser | null) => {
@@ -179,13 +195,81 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
       setIsAuthenticated(true);
       try {
         const me = await authApi.getMe();
+        const u = me.user;
         setUser((prev) => applyAuthUser(prev, me.user, me.profile));
+        userIdRef.current = u.id;
       } catch {
         // The sign-in payload already has the user when /me is briefly unavailable.
       }
     },
     []
   );
+
+  const loadDriveStateAndData = useCallback(async () => {
+    try {
+      setDriveSync((prev) => ({ ...prev, status: 'checking', error: null }));
+      const status = await authApi.checkDriveStatus();
+      if (status.connected) {
+        await clearDrivePromptPending();
+        setDriveSync({
+          status: 'loading',
+          driveConnected: true,
+          driveFileId: status.driveFileId || null,
+          driveFolderId: status.driveFolderId || null,
+          lastSyncedAt: status.connectedAt || null,
+          error: null,
+        });
+        try {
+          const driveData = await authApi.loadDriveData();
+          const canonical = mapToCanonicalState(driveData.data);
+          const appData = canonicalToAppStore(canonical);
+          setUser(appData.user || blankUser());
+          setAccounts(appData.accounts || []);
+          setConnectedAccounts(appData.connectedAccounts || []);
+          setTransactions(appData.transactions || []);
+          setBudgets(appData.budgets || []);
+          setSavingsGoals(appData.savingsGoals || []);
+          setBills(appData.bills || []);
+          setLoans(appData.loans || []);
+          setInvestments(appData.investments || []);
+          setNotifications(appData.notifications || []);
+          setSubscriptions(appData.subscriptions || []);
+          setCategories(appData.categories || {});
+          setDriveSync((prev) => ({
+            ...prev,
+            status: 'synced',
+            lastSyncedAt: new Date().toISOString(),
+          }));
+        } catch {
+          setDriveSync((prev) => ({
+            ...prev,
+            status: 'sync_failed',
+            error: 'Failed to load Drive data',
+          }));
+        }
+        return true;
+      }
+      setDriveSync({
+        status: 'not_connected',
+        driveConnected: false,
+        driveFileId: null,
+        driveFolderId: null,
+        lastSyncedAt: null,
+        error: null,
+      });
+      return false;
+    } catch {
+      setDriveSync({
+        status: 'reconnect_required',
+        driveConnected: false,
+        driveFileId: null,
+        driveFolderId: null,
+        lastSyncedAt: null,
+        error: 'Unable to verify Drive connection',
+      });
+      return false;
+    }
+  }, []);
 
   const login = useCallback(
     async (email: string, password: string) => {
@@ -203,9 +287,14 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
       const fullName = `${data.firstName || ''} ${data.lastName || ''}`.trim();
       const result = await authApi.signUp((data.email || '').trim(), data.password || '', fullName);
       if (!result.accessToken) {
+        await savePendingSignup((data.email || '').trim(), fullName);
+        setPendingSignup({ email: (data.email || '').trim(), fullName });
         return { needsVerification: true };
       }
+      await clearPendingSignup();
+      setPendingSignup(null);
       await establishSession(result.accessToken, result.refreshToken, result.user);
+      void connectDriveRef.current();
       return { needsVerification: false };
     },
     [establishSession]
@@ -217,10 +306,18 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
       if (!result.accessToken) {
         throw new Error('That code did not create a session. Request a new code and try again.');
       }
+      await clearPendingSignup();
+      setPendingSignup(null);
       await establishSession(result.accessToken, result.refreshToken, result.user);
+      void connectDriveRef.current();
     },
     [establishSession]
   );
+
+  const cancelPendingSignup = useCallback(async () => {
+    setPendingSignup(null);
+    await clearPendingSignup();
+  }, []);
 
   const resendSignupCode = useCallback(async (email: string) => {
     await authApi.resendSignupCode(email.trim());
@@ -233,8 +330,30 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
       // Clear the local session even if the server cannot be reached.
     }
     await clearSession();
-    setUser((prev) => blankUser(prev));
+    setUser(blankUser());
+    setAccounts([]);
+    setConnectedAccounts([]);
+    setTransactions([]);
+    setBudgets([]);
+    setSavingsGoals([]);
+    setBills([]);
+    setLoans([]);
+    setInvestments([]);
+    setNotifications([]);
+    setSubscriptions([]);
+    setCategories({});
     setIsAuthenticated(false);
+    setDriveSync({
+      status: 'checking',
+      driveConnected: false,
+      driveFileId: null,
+      driveFolderId: null,
+      lastSyncedAt: null,
+      error: null,
+    });
+    setPendingSignup(null);
+    await clearPendingSignup();
+    await clearDrivePromptPending();
   }, []);
 
   const forgotPassword = useCallback(async (email: string) => {
@@ -245,7 +364,7 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
     await authApi.resetPassword(email.trim(), code.trim(), newPassword);
     await clearSession();
     setRecoveryToken(null);
-    setUser((prev) => blankUser(prev));
+    setUser(blankUser());
     setIsAuthenticated(false);
   }, []);
 
@@ -256,68 +375,6 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
   const clearRecovery = useCallback(() => {
     setRecoveryToken(null);
   }, []);
-
-  useEffect(() => {
-    let active = true;
-
-    const openRecovery = (accessToken: string) => {
-      setRecoveryToken(accessToken);
-      setIsAuthenticated(false);
-    };
-
-    const subscription = Linking.addEventListener('url', (event: { url: string }) => {
-      const url = event.url;
-      const link = readAuthLink(url);
-      if (!link.accessToken) return;
-      if (link.type === 'recovery') {
-        openRecovery(link.accessToken);
-        return;
-      }
-      void establishSession(link.accessToken, link.refreshToken);
-    });
-
-    (async () => {
-      try {
-        const initialUrl = await Linking.getInitialURL();
-        const initialLink = initialUrl ? readAuthLink(initialUrl) : null;
-        if (initialLink?.type === 'recovery' && initialLink.accessToken) {
-          if (active) openRecovery(initialLink.accessToken);
-          return;
-        }
-        if (initialLink?.accessToken) {
-          await establishSession(initialLink.accessToken, initialLink.refreshToken);
-          return;
-        }
-        const token = await getAccessToken();
-        if (!token) return;
-        const me = await authApi.getMe();
-        if (!active) return;
-        setUser((prev) => applyAuthUser(prev, me.user, me.profile));
-        setIsAuthenticated(true);
-      } catch {
-        await clearSession();
-        if (active) setIsAuthenticated(false);
-      } finally {
-        if (active) setAuthReady(true);
-      }
-    })();
-
-    return () => {
-      active = false;
-      subscription.remove();
-    };
-  }, [establishSession]);
-
-  const importStatement = (statement: BankStatement) => {
-    setTransactions((prev) => [...statement.transactions, ...prev]);
-    setConnectedAccounts((prev) =>
-      prev.map((acc) =>
-        acc.id === statement.accountId
-          ? { ...acc, balance: statement.newBalance }
-          : acc
-      )
-    );
-  };
 
   const updateUser = useCallback(async (patch: Partial<UserProfile>) => {
     const fullName = `${patch.firstName || ''} ${patch.lastName || ''}`.trim();
@@ -333,9 +390,8 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
     const amount = Math.abs(asNumber(input.amount, 100));
     const account = accounts.find((item) => item.id === input.accountId) || accounts[0];
     const created: Transaction = {
-      ...mockTransactions[0],
-      ...input,
       id: nextId('txn'),
+      ...input,
       title: input.title || (type === 'income' ? 'Income' : type === 'transfer' ? 'Transfer' : 'Expense'),
       amount,
       category: input.category || (type === 'income' ? 'Income' : 'Other'),
@@ -367,8 +423,6 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
 
   const addAccount = (input: Partial<Account>) => {
     const created: Account = {
-      ...mockAccounts[0],
-      ...input,
       id: nextId('acc'),
       name: input.name || 'New Account',
       type: input.type || 'checking',
@@ -382,7 +436,6 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
     setAccounts((prev) => [created, ...prev]);
     setConnectedAccounts((prev) => [
       {
-        ...mockConnectedAccounts[0],
         id: created.id,
         bankId: 'manual',
         bankName: created.institution,
@@ -391,7 +444,7 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
         balance: created.balance,
         maskedNumber: `****${created.last4digits || '0000'}`,
         lastSynced: new Date().toISOString(),
-        syncStatus: 'synced' as const,
+        syncStatus: 'synced',
         isActive: true,
         autoSync: false,
         connectedAt: new Date().toISOString(),
@@ -403,8 +456,6 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
 
   const addBudget = (input: Partial<Budget>) => {
     const created: Budget = {
-      ...mockBudgets[0],
-      ...input,
       id: nextId('bud'),
       category: input.category || 'Other',
       budgeted: asNumber(input.budgeted, 500),
@@ -426,8 +477,6 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
 
   const addGoal = (input: Partial<Goal>) => {
     const created: Goal = {
-      ...mockGoals[0],
-      ...input,
       id: nextId('goal'),
       name: input.name || 'New Goal',
       targetAmount: asNumber(input.targetAmount, 1000),
@@ -449,8 +498,6 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
 
   const addBill = (input: Partial<Bill>) => {
     const created: Bill = {
-      ...mockBills[0],
-      ...input,
       id: nextId('bill'),
       name: input.name || 'New Bill',
       amount: asNumber(input.amount, 50),
@@ -467,8 +514,6 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
   const addLoan = (input: Partial<Loan>) => {
     const remaining = asNumber((input as any).remainingAmount ?? (input as any).remaining, 1000);
     const created: Loan = {
-      ...mockLoans[0],
-      ...input,
       id: nextId('loan'),
       name: input.name || 'New Loan',
       lender: (input as any).lender || 'Lender',
@@ -503,8 +548,6 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
     const buyPrice = asNumber((input as any).buyPrice, 100);
     const quantity = asNumber((input as any).quantity, 1);
     const created: Investment = {
-      ...mockInvestments[0],
-      ...input,
       id: nextId('inv'),
       name: (input as any).name || ticker,
       ticker,
@@ -520,8 +563,6 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
 
   const addSubscription = (input: Partial<Subscription>) => {
     const created: Subscription = {
-      ...mockSubscriptions[0],
-      ...input,
       id: nextId('sub'),
       name: input.name || 'New Subscription',
       amount: asNumber(input.amount, 9.99),
@@ -569,11 +610,231 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
     setNotifications((prev) => prev.map((item) => ({ ...item, isRead: true })));
   };
 
+  const importStatement = (statement: BankStatement) => {
+    setTransactions((prev) => [...statement.transactions, ...prev]);
+    setConnectedAccounts((prev) =>
+      prev.map((acc) =>
+        acc.id === statement.accountId
+          ? { ...acc, balance: statement.newBalance }
+          : acc
+      )
+    );
+  };
+
+  const scheduleSync = useCallback(() => {
+    if (syncTimeoutRef.current) {
+      clearTimeout(syncTimeoutRef.current);
+    }
+    syncTimeoutRef.current = setTimeout(() => {
+      syncToDrive(true);
+    }, DEBOUNCE_MS);
+  }, []);
+
+  const syncToDrive = useCallback(
+    async (debounced = false) => {
+      if (isSyncingRef.current) return;
+      if (!driveSync.driveConnected || !userIdRef.current) return;
+
+      isSyncingRef.current = true;
+      setDriveSync((prev) => ({ ...prev, status: 'syncing' }));
+
+      try {
+        const canonicalData = appStoreToCanonical(
+          {
+            user,
+            accounts,
+            connectedAccounts,
+            transactions,
+            budgets,
+            savingsGoals,
+            bills,
+            loans,
+            investments,
+            categories,
+            notifications,
+            subscriptions,
+            settings: {},
+          },
+          userIdRef.current
+        );
+        await authApi.syncDriveData(canonicalData);
+        setDriveSync((prev) => ({
+          ...prev,
+          status: 'synced',
+          lastSyncedAt: new Date().toISOString(),
+          error: null,
+        }));
+      } catch (err: any) {
+        setDriveSync((prev) => ({
+          ...prev,
+          status: 'sync_failed',
+          error: err?.message || 'Sync failed',
+        }));
+      } finally {
+        isSyncingRef.current = false;
+      }
+    },
+    [driveSync.driveConnected, user, accounts, connectedAccounts, transactions, budgets, savingsGoals, bills, loans, investments, categories, notifications, subscriptions]
+  );
+
+  const connectDrive = useCallback(async () => {
+    try {
+      setDriveSync((prev) => ({ ...prev, status: 'connecting', error: null }));
+      driveStatusRef.current = 'connecting';
+      await saveDrivePromptPending();
+      const { url } = await authApi.startDriveOAuth();
+      if (!url) {
+        throw new Error('Google Drive did not return a sign-in link');
+      }
+      await Linking.openURL(url);
+    } catch (err: any) {
+      await clearDrivePromptPending();
+      driveStatusRef.current = 'reconnect_required';
+      setDriveSync({
+        status: 'reconnect_required',
+        driveConnected: false,
+        driveFileId: null,
+        driveFolderId: null,
+        lastSyncedAt: null,
+        error: err?.message || 'Could not open Google Drive access',
+      });
+    }
+  }, []);
+  connectDriveRef.current = connectDrive;
+
+  const loadDriveDataFn = useCallback(async () => {
+    try {
+      setDriveSync((prev) => ({ ...prev, status: 'loading' }));
+      const driveData = await authApi.loadDriveData();
+      const canonical = mapToCanonicalState(driveData.data);
+      const appData = canonicalToAppStore(canonical);
+      setUser(appData.user || blankUser());
+      setAccounts(appData.accounts || []);
+      setConnectedAccounts(appData.connectedAccounts || []);
+      setTransactions(appData.transactions || []);
+      setBudgets(appData.budgets || []);
+      setSavingsGoals(appData.savingsGoals || []);
+      setBills(appData.bills || []);
+      setLoans(appData.loans || []);
+      setInvestments(appData.investments || []);
+      setNotifications(appData.notifications || []);
+      setSubscriptions(appData.subscriptions || []);
+      setCategories(appData.categories || {});
+      setDriveSync((prev) => ({ ...prev, status: 'synced', lastSyncedAt: new Date().toISOString() }));
+    } catch {
+      setDriveSync((prev) => ({ ...prev, status: 'sync_failed', error: 'Failed to load Drive data' }));
+    }
+  }, []);
+
+  const disconnectDriveFn = useCallback(async () => {
+    try {
+      await authApi.disconnectDrive();
+    } catch {
+      // Proceed with local cleanup even if server call fails
+    }
+    setDriveSync({ status: 'not_connected', driveConnected: false, driveFileId: null, driveFolderId: null, lastSyncedAt: null, error: null });
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+
+    const openRecovery = (accessToken: string) => {
+      setRecoveryToken(accessToken);
+      setIsAuthenticated(false);
+    };
+
+    const subscription = Linking.addEventListener('url', (event: { url: string }) => {
+      const url = event.url;
+      if (url.includes('drive-connected')) {
+        void loadDriveStateAndData();
+        return;
+      }
+      const link = readAuthLink(url);
+      if (!link.accessToken) return;
+      if (link.type === 'recovery') {
+        openRecovery(link.accessToken);
+        return;
+      }
+      void establishSession(link.accessToken, link.refreshToken);
+    });
+
+    (async () => {
+      try {
+        const initialUrl = await Linking.getInitialURL();
+        const initialLink = initialUrl ? readAuthLink(initialUrl) : null;
+        if (initialLink?.type === 'recovery' && initialLink.accessToken) {
+          if (active) openRecovery(initialLink.accessToken);
+          return;
+        }
+        if (initialLink?.accessToken) {
+          await establishSession(initialLink.accessToken, initialLink.refreshToken);
+          return;
+        }
+        const token = await getAccessToken();
+        if (!token) {
+          const pending = await getPendingSignup();
+          if (pending) {
+            setPendingSignup(pending);
+          }
+          if (active) {
+            setAuthReady(true);
+            setDriveSync({ status: 'checking', driveConnected: false, driveFileId: null, driveFolderId: null, lastSyncedAt: null, error: null });
+          }
+          return;
+        }
+        const me = await authApi.getMe();
+        if (!active) return;
+        setUser((prev) => applyAuthUser(prev, me.user, me.profile));
+        setIsAuthenticated(true);
+        userIdRef.current = me.user.id;
+        const driveConnected = await loadDriveStateAndData();
+        const drivePromptAge = await getDrivePromptAgeMs();
+        const shouldResumeDrivePrompt =
+          drivePromptAge !== null && drivePromptAge > 20000 && drivePromptAge < 10 * 60 * 1000;
+        if (active && !driveConnected && shouldResumeDrivePrompt) {
+          await connectDriveRef.current();
+        }
+      } catch {
+        await clearSession();
+        if (active) setIsAuthenticated(false);
+      } finally {
+        if (active) {
+          setAuthReady(true);
+        }
+      }
+    })();
+
+    const appStateSub = AppState.addEventListener('change', (nextState) => {
+      if (nextState !== 'active') return;
+      setTimeout(() => {
+        void (async () => {
+          const age = await getDrivePromptAgeMs();
+          const waitingForDrive = driveStatusRef.current === 'connecting' || (age !== null && age < 10 * 60 * 1000);
+          if (!waitingForDrive) return;
+          const connected = await loadDriveStateAndData();
+          if (!connected && age !== null && age > 15000) {
+            await clearDrivePromptPending();
+          }
+        })();
+      }, 1200);
+    });
+
+    return () => {
+      active = false;
+      subscription.remove();
+      appStateSub.remove();
+      if (syncTimeoutRef.current) {
+        clearTimeout(syncTimeoutRef.current);
+      }
+    };
+  }, [establishSession, loadDriveStateAndData]);
+
   const value = useMemo<AppStoreValue>(
     () => ({
       authReady,
       isAuthenticated,
       recoveryToken,
+      pendingSignup,
       user,
       accounts,
       connectedAccounts,
@@ -585,10 +846,13 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
       investments,
       notifications,
       subscriptions,
+      categories,
+      driveSync,
       login,
       signup,
       verifySignupCode,
       resendSignupCode,
+      cancelPendingSignup,
       logout,
       forgotPassword,
       resetPassword,
@@ -616,22 +880,17 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
       markNotificationRead,
       markAllNotificationsRead,
       importStatement,
+      connectDrive,
+      loadDriveData: loadDriveDataFn,
+      syncToDrive,
+      disconnectDrive: disconnectDriveFn,
     }),
     [
       authReady,
       isAuthenticated,
       recoveryToken,
+      pendingSignup,
       user,
-      login,
-      signup,
-      verifySignupCode,
-      resendSignupCode,
-      logout,
-      forgotPassword,
-      resetPassword,
-      changePassword,
-      clearRecovery,
-      updateUser,
       accounts,
       connectedAccounts,
       transactions,
@@ -642,6 +901,44 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
       investments,
       notifications,
       subscriptions,
+      categories,
+      driveSync,
+      login,
+      signup,
+      verifySignupCode,
+      resendSignupCode,
+      cancelPendingSignup,
+      logout,
+      forgotPassword,
+      resetPassword,
+      changePassword,
+      clearRecovery,
+      updateUser,
+      addTransaction,
+      updateTransaction,
+      deleteTransaction,
+      addAccount,
+      addBudget,
+      updateBudget,
+      deleteBudget,
+      addGoal,
+      updateGoal,
+      deleteGoal,
+      addBill,
+      markBillPaid,
+      addLoan,
+      payLoan,
+      deleteLoan,
+      addInvestment,
+      addSubscription,
+      addTransfer,
+      markNotificationRead,
+      markAllNotificationsRead,
+      importStatement,
+      connectDrive,
+      loadDriveDataFn,
+      syncToDrive,
+      disconnectDriveFn,
     ]
   );
 

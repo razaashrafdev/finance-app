@@ -107,7 +107,13 @@ const AddGoalScreen: React.FC<AddGoalScreenProps> = ({ navigation, route }) => {
         <Text style={[styles.headerTitle, { color: colors.text }]}>
           {editMode ? 'Edit Goal' : 'Create Goal'}
         </Text>
-        <View style={styles.headerSpacer} />
+        <TouchableOpacity
+          onPress={handleSave}
+          style={[styles.headerSaveButton, { backgroundColor: colors.primary }]}
+          activeOpacity={0.85}
+        >
+          <Text style={styles.headerSaveText}>Save</Text>
+        </TouchableOpacity>
       </View>
 
       <ScreenScrollView
@@ -287,6 +293,19 @@ const styles = StyleSheet.create({
   },
   headerSpacer: {
     width: 40,
+  },
+  headerSaveButton: {
+    minWidth: 64,
+    height: 36,
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  headerSaveText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '700',
   },
   scrollView: {
     flex: 1,

@@ -10,7 +10,7 @@ import {
 import { ScreenFlatList } from '../../components/common/ScreenScroll';
 import { useTheme } from '../../theme/ThemeContext';
 import { useAppStore } from '../../store/AppStore';
-import { categoryList } from '../../data/mockData';
+import { resolveCategoryList } from '../../data/categories';
 import { formatCurrency, formatDate, formatShortDate } from '../../utils/format';
 import TransactionRow from '../../components/common/TransactionRow';
 import Button from '../../components/common/Button';
@@ -36,7 +36,8 @@ const dateRanges: DateRange[] = [
 
 const TransactionsListScreen: React.FC = () => {
   const { colors, isDark } = useTheme();
-  const { transactions } = useAppStore();
+  const { transactions, categories: storeCategories } = useAppStore();
+  const categoryList = resolveCategoryList(storeCategories);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
   const [dateFilter, setDateFilter] = useState<DateFilter>('thisMonth');

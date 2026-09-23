@@ -10,7 +10,7 @@ import { ScreenScrollView } from '../../components/common/ScreenScroll';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../theme/ThemeContext';
 import Card from '../../components/common/Card';
-import { calendarEvents } from '../../data/mockData';
+import { useAppStore } from '../../store/AppStore';
 import { formatCurrency } from '../../utils/format';
 import { spacing, borderRadius } from '../../theme/spacing';
 
@@ -33,13 +33,58 @@ const EVENT_TYPE_COLORS: Record<string, string> = {
 
 const CalendarScreen: React.FC<CalendarScreenProps> = ({ navigation }) => {
   const { colors } = useTheme();
-  const [currentDate, setCurrentDate] = useState(new Date(2026, 8, 21));
-  const [selectedDay, setSelectedDay] = useState<number>(21);
+  const { bills, subscriptions, loans } = useAppStore();
+  const now = new Date();
+  const [currentDate, setCurrentDate] = useState(new Date(now.getFullYear(), now.getMonth(), 1));
+  const [selectedDay, setSelectedDay] = useState<number>(now.getDate());
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const firstDayOfWeek = new Date(year, month, 1).getDay();
+
+  const calendarEvents = useMemo(() => {
+    const events: Array<{
+      id: string;
+      title: string;
+      date: string;
+      type: string;
+      amount: number;
+      color: string;
+    }> = [];
+
+    for (const bill of bills) {
+      events.push({
+        id: `bill-${bill.id}`,
+        title: bill.name,
+        date: bill.dueDate,
+        type: 'bill',
+        amount: Number(bill.amount) || 0,
+        color: EVENT_TYPE_COLORS.bill,
+      });
+    }
+    for (const sub of subscriptions) {
+      events.push({
+        id: `sub-${sub.id}`,
+        title: sub.name,
+        date: sub.billingDate,
+        type: 'subscription',
+        amount: Number(sub.amount) || 0,
+        color: (sub as any).color || EVENT_TYPE_COLORS.subscription,
+      });
+    }
+    for (const loan of loans) {
+      events.push({
+        id: `loan-${loan.id}`,
+        title: loan.name,
+        date: loan.nextPaymentDate,
+        type: 'loan',
+        amount: Number(loan.monthlyPayment) || 0,
+        color: EVENT_TYPE_COLORS.loan,
+      });
+    }
+    return events.filter((e) => e.date);
+  }, [bills, subscriptions, loans]);
 
   const calendarDays = useMemo(() => {
     const days: (number | null)[] = [];
@@ -60,12 +105,13 @@ const CalendarScreen: React.FC<CalendarScreenProps> = ({ navigation }) => {
   const selectedEvents = getEventsForDay(selectedDay);
 
   const upcomingEvents = useMemo(() => {
-    const now = new Date(2026, 8, 21);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
     return calendarEvents
-      .filter((e) => new Date(e.date) >= now)
+      .filter((e) => new Date(e.date) >= today)
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
       .slice(0, 5);
-  }, []);
+  }, [calendarEvents]);
 
   const navigateMonth = (direction: number) => {
     const newDate = new Date(year, month + direction, 1);
@@ -74,7 +120,8 @@ const CalendarScreen: React.FC<CalendarScreenProps> = ({ navigation }) => {
   };
 
   const isToday = (day: number) => {
-    return year === 2026 && month === 8 && day === 21;
+    const today = new Date();
+    return year === today.getFullYear() && month === today.getMonth() && day === today.getDate();
   };
 
   return (

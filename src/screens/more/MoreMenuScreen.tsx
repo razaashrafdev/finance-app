@@ -26,7 +26,8 @@ interface MenuItem {
   title: string;
   icon: IconName;
   iconColor: string;
-  screen: string;
+  screen?: string;
+  onPress?: () => void;
   badge?: number;
 }
 
@@ -37,7 +38,7 @@ interface MenuSection {
 
 const MoreMenuScreen: React.FC<MoreMenuScreenProps> = ({ navigation }) => {
   const { colors, isDark } = useTheme();
-  const { user: userProfile, notifications, bills } = useAppStore();
+  const { user: userProfile, notifications, bills, logout } = useAppStore();
 
   const unreadCount = notifications.filter((n: any) => !n.isRead).length;
   const unpaidBillsCount = bills.filter((b: any) => !b.isPaid).length;
@@ -136,6 +137,13 @@ const MoreMenuScreen: React.FC<MoreMenuScreenProps> = ({ navigation }) => {
           screen: 'BankStatement',
         },
         {
+          id: 'logout',
+          title: 'Logout',
+          icon: 'log-out-outline',
+          iconColor: '#EF4444',
+          onPress: () => logout(),
+        },
+        {
           id: 'accounts',
           title: 'Accounts',
           icon: 'business-outline',
@@ -196,7 +204,10 @@ const MoreMenuScreen: React.FC<MoreMenuScreenProps> = ({ navigation }) => {
                     index < section.items.length - 1 && { borderBottomWidth: 1, borderBottomColor: colors.borderLight || colors.border },
                   ]}
                   activeOpacity={0.6}
-                  onPress={() => navigation.navigate(item.screen)}
+                  onPress={() => {
+                    if (item.onPress) { item.onPress(); }
+                    else if (item.screen) { navigation.navigate(item.screen); }
+                  }}
                 >
                   <View style={[styles.menuIconContainer, { backgroundColor: item.iconColor + '15' }]}>
                     <Ionicons name={item.icon} size={22} color={item.iconColor} />

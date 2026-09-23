@@ -9,7 +9,7 @@ import {
 import { ScreenScrollView } from '../../components/common/ScreenScroll';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../theme/ThemeContext';
-import { categories } from '../../data/mockData';
+import { resolveCategories } from '../../data/categories';
 import { useAppStore } from '../../store/AppStore';
 import { toIonicon } from '../../utils/icons';
 import { formatCurrency, formatDate } from '../../utils/format';
@@ -24,8 +24,8 @@ interface ExpensesScreenProps {
 
 const ExpensesScreen: React.FC<ExpensesScreenProps> = ({ navigation }) => {
   const { colors } = useTheme();
-  const { transactions } = useAppStore();
-
+  const { transactions, categories: storeCategories } = useAppStore();
+  const categories = resolveCategories(storeCategories);
   const expenseTransactions = useMemo(
     () => transactions.filter((t: any) => t.type === 'expense'),
     []

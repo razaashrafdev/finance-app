@@ -11,7 +11,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../theme/ThemeContext';
 import { spacing, borderRadius } from '../../theme/spacing';
 import SearchBar from '../../components/common/SearchBar';
-import { availableBanks } from '../../data/mockData';
+import { availableBanks } from '../../data/banks';
 
 interface BankSelectionScreenProps {
   navigation: any;

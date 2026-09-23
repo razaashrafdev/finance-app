@@ -10,7 +10,6 @@ import { ScreenScrollView } from '../../components/common/ScreenScroll';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../theme/ThemeContext';
 import Card from '../../components/common/Card';
-import { netWorthHistory } from '../../data/mockData';
 import { formatCurrency, getMonthName } from '../../utils/format';
 import { spacing, borderRadius } from '../../theme/spacing';
 import { useAppStore } from '../../store/AppStore';
@@ -68,20 +67,19 @@ const NetWorthScreen: React.FC<NetWorthScreenProps> = ({ navigation }) => {
     }));
 
     const netWorth = totalAssets - totalLiabilities;
-    const previousNetWorth = netWorthHistory.length >= 2
-      ? netWorthHistory[netWorthHistory.length - 2].netWorth
-      : netWorth;
-    const monthlyChange = netWorth - previousNetWorth;
-    const trend = monthlyChange >= 0 ? 'Increasing' : 'Decreasing';
+    const previousNetWorth = netWorth;
+    const monthlyChange = 0;
+    const trend = 'Stable';
+    const history = [{ date: new Date().toISOString(), netWorth }];
 
-    return { assets, liabilities, totalAssets, totalLiabilities, netWorth, monthlyChange, trend };
-  }, []);
+    return { assets, liabilities, totalAssets, totalLiabilities, netWorth, monthlyChange, trend, history };
+  }, [accounts, loans]);
 
   const chartW = 320;
   const chartH = 140;
-  const history = netWorthHistory;
-  const maxVal = Math.max(...history.map((h: any) => h.netWorth));
-  const minVal = Math.min(...history.map((h: any) => h.netWorth));
+  const history = data.history;
+  const maxVal = history.length ? Math.max(...history.map((h: any) => h.netWorth)) : 0;
+  const minVal = history.length ? Math.min(...history.map((h: any) => h.netWorth)) : 0;
   const range = maxVal - minVal || 1;
 
   const isPositive = data.monthlyChange >= 0;

@@ -13,7 +13,7 @@ import { useTheme } from '../../theme/ThemeContext';
 import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
-import { categories } from '../../data/mockData';
+import { resolveCategories } from '../../data/categories';
 import { formatCurrency } from '../../utils/format';
 import { spacing, borderRadius } from '../../theme/spacing';
 import { useAppStore } from '../../store/AppStore';
@@ -29,7 +29,8 @@ const PERIODS = ['Monthly', 'Weekly', 'Yearly'] as const;
 
 const AddBudgetScreen: React.FC<AddBudgetScreenProps> = ({ navigation, route }) => {
   const { colors } = useTheme();
-  const { budgets, addBudget, updateBudget } = useAppStore();
+  const { budgets, addBudget, updateBudget, categories: storeCategories } = useAppStore();
+  const categories = resolveCategories(storeCategories);
   const toast = useToast();
   const { budgetId, editMode } = route.params || {};
 
@@ -87,7 +88,13 @@ const AddBudgetScreen: React.FC<AddBudgetScreenProps> = ({ navigation, route }) 
         <Text style={[styles.headerTitle, { color: colors.text }]}>
           {editMode ? 'Edit Budget' : 'Add Budget'}
         </Text>
-        <View style={styles.headerSpacer} />
+        <TouchableOpacity
+          onPress={handleSave}
+          style={[styles.headerSaveButton, { backgroundColor: colors.primary }]}
+          activeOpacity={0.85}
+        >
+          <Text style={styles.headerSaveText}>Save</Text>
+        </TouchableOpacity>
       </View>
 
       <ScreenScrollView
@@ -231,6 +238,19 @@ const styles = StyleSheet.create({
   },
   headerSpacer: {
     width: 40,
+  },
+  headerSaveButton: {
+    minWidth: 64,
+    height: 36,
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  headerSaveText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '700',
   },
   scrollView: {
     flex: 1,

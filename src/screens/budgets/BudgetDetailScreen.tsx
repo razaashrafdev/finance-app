@@ -13,7 +13,7 @@ import { useTheme } from '../../theme/ThemeContext';
 import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import ProgressRing from '../../components/common/ProgressRing';
-import { categories } from '../../data/mockData';
+import { resolveCategories } from '../../data/categories';
 import { formatCurrency, formatDate } from '../../utils/format';
 import { spacing, borderRadius } from '../../theme/spacing';
 import { useAppStore } from '../../store/AppStore';
@@ -26,9 +26,9 @@ interface BudgetDetailScreenProps {
 
 const BudgetDetailScreen: React.FC<BudgetDetailScreenProps> = ({ navigation, route }) => {
   const { colors } = useTheme();
-  const { budgets, transactions, deleteBudget } = useAppStore();
+  const { budgets, transactions, deleteBudget, categories: storeCategories } = useAppStore();
+  const categories = resolveCategories(storeCategories);
   const { budgetId } = route.params || {};
-
   const budget = useMemo(
     () => budgets.find((b: any) => b.id === budgetId),
     [budgetId, budgets]

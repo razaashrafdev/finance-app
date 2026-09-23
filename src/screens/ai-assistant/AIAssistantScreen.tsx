@@ -15,7 +15,6 @@ import {
 import { ScreenScrollView } from '../../components/common/ScreenScroll';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../theme/ThemeContext';
-import { aiMessages, userProfile } from '../../data/mockData';
 import { formatCurrency } from '../../utils/format';
 import { spacing, borderRadius } from '../../theme/spacing';
 
@@ -89,7 +88,7 @@ const TypingIndicator = () => {
 
 const AIAssistantScreen: React.FC<AIAssistantScreenProps> = ({ navigation }) => {
   const { colors } = useTheme();
-  const [messages, setMessages] = useState<Message[]>(aiMessages as Message[]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);

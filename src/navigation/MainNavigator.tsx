@@ -95,6 +95,7 @@ type HomeParamList = {
   AddIncome: undefined;
   AddExpense: undefined;
   AddTransfer: undefined;
+  EditTransaction: { transactionId: string };
   AddGoal: undefined;
 };
 
@@ -168,9 +169,11 @@ const defaultStackScreenOptions = (colors: any) => ({
 // ─── Onboarding Stack ──────────────────────────────────────────
 function OnboardingStack() {
   const { colors } = useTheme();
+  const { pendingSignup } = useAppStore();
 
   return (
     <OnboardingNavigator.Navigator
+      initialRouteName={pendingSignup?.email ? 'SignUp' : 'Welcome'}
       screenOptions={{
         headerShown: false,
         gestureEnabled: true,
@@ -233,6 +236,11 @@ function HomeStack() {
         name="AddTransfer"
         component={AddTransferScreen}
         options={{ title: 'Transfer' }}
+      />
+      <HomeNavigator.Screen
+        name="EditTransaction"
+        component={EditTransactionScreen}
+        options={{ title: 'Edit Transaction' }}
       />
       <HomeNavigator.Screen
         name="AddGoal"
@@ -486,14 +494,16 @@ function AddButtonBottomSheet({
     onClose();
     setTimeout(() => {
       const nav = navigation as any;
+      // AddButtonBottomSheet sits under RootStack (MainTabs screen), not inside Tab.Navigator.
+      // So navigate through MainTabs -> HomeTab/BudgetsTab/MoreTab.
       if (route === 'AddIncome' || route === 'AddExpense' || route === 'AddTransfer') {
-        nav.navigate('HomeTab', { screen: route });
+        nav.navigate('MainTabs', { screen: 'HomeTab', params: { screen: route } });
       } else if (route === 'AddGoal') {
-        nav.navigate('BudgetsTab', { screen: route });
+        nav.navigate('MainTabs', { screen: 'BudgetsTab', params: { screen: route } });
       } else if (route === 'BillsScreen') {
-        nav.navigate('MoreTab', { screen: route });
+        nav.navigate('MainTabs', { screen: 'MoreTab', params: { screen: route } });
       } else {
-        nav.navigate(route);
+        nav.navigate('MainTabs', { screen: route });
       }
     }, 280);
   };
@@ -540,6 +550,14 @@ function FloatingTabBar(props: BottomTabBarProps) {
   const { width: windowWidth } = useWindowDimensions();
   const sideGap = 22;
   const tabBarWidth = windowWidth - sideGap * 2;
+
+  // Hide the floating dock on nested screens (Add Income/Expense, details, etc.)
+  // so footer Save buttons stay visible and tappable.
+  const focusedRoute = props.state.routes[props.state.index] as { state?: { index?: number } };
+  const nestedIndex = focusedRoute.state?.index ?? 0;
+  if (nestedIndex > 0) {
+    return null;
+  }
 
   return (
     <View pointerEvents="box-none" style={styles.tabBarDock}>

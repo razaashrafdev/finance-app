@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { ScreenScrollView } from '../../components/common/ScreenScroll';
 import { useTheme } from '../../theme/ThemeContext';
-import { categoryList } from '../../data/mockData';
+import { resolveCategoryList } from '../../data/categories';
 import { useAppStore } from '../../store/AppStore';
 import { useToast } from '../../components/common/Toast';
 import { formatCurrency } from '../../utils/format';
@@ -43,7 +43,8 @@ const accounts = [
 
 const AddTransactionScreen: React.FC<AddTransactionProps> = ({ navigation }) => {
   const { colors, isDark } = useTheme();
-  const { addTransaction, accounts: storeAccounts } = useAppStore();
+  const { addTransaction, accounts: storeAccounts, categories: storeCategories } = useAppStore();
+  const categoryList = resolveCategoryList(storeCategories);
   const toast = useToast();
 
   const [transactionType, setTransactionType] = useState<TransactionType>('expense');
@@ -364,7 +365,13 @@ const AddTransactionScreen: React.FC<AddTransactionProps> = ({ navigation }) => 
           <Text style={[styles.closeText, { color: colors.text }]}>✕</Text>
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.text }]}>Add Transaction</Text>
-        <View style={styles.headerRight} />
+        <TouchableOpacity
+          onPress={handleSave}
+          style={[styles.headerSaveButton, { backgroundColor: colors.primary }]}
+          activeOpacity={0.85}
+        >
+          <Text style={styles.headerSaveText}>Save</Text>
+        </TouchableOpacity>
       </View>
 
       <ScreenScrollView
@@ -425,6 +432,19 @@ const styles = StyleSheet.create({
   },
   headerRight: {
     width: 32,
+  },
+  headerSaveButton: {
+    minWidth: 64,
+    height: 36,
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  headerSaveText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '700',
   },
   scrollContent: {
     padding: 20,

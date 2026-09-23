@@ -87,7 +87,13 @@ const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({ navigation }) => {
           <Ionicons name="chevron-back" size={22} color={colors.text} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.text }]}>Add Expense</Text>
-        <View style={styles.headerSpacer} />
+        <TouchableOpacity
+          onPress={handleSave}
+          style={[styles.headerSaveButton, { backgroundColor: colors.primary }]}
+          activeOpacity={0.85}
+        >
+          <Text style={styles.headerSaveText}>Save</Text>
+        </TouchableOpacity>
       </View>
 
       <KeyboardAvoidingView
@@ -307,6 +313,15 @@ const styles = StyleSheet.create({
   backButton: { width: 40, height: 40, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
   headerTitle: { flex: 1, fontSize: 18, fontWeight: '700', textAlign: 'center' },
   headerSpacer: { width: 40 },
+  headerSaveButton: {
+    minWidth: 64,
+    height: 36,
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  headerSaveText: { color: '#fff', fontSize: 14, fontWeight: '700' },
   scrollView: { flex: 1 },
   scrollContent: { paddingBottom: 20 },
   amountSection: { paddingHorizontal: 20, paddingTop: 32, paddingBottom: 24, alignItems: 'center' },

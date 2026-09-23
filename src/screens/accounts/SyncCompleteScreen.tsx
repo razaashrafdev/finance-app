@@ -13,7 +13,6 @@ import { ScreenScrollView } from '../../components/common/ScreenScroll';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../theme/ThemeContext';
 import { spacing, borderRadius } from '../../theme/spacing';
-import { syncTransactions } from '../../data/mockData';
 import Button from '../../components/common/Button';
 
 interface SyncCompleteScreenProps {
@@ -39,8 +38,15 @@ const SyncCompleteScreen: React.FC<SyncCompleteScreenProps> = ({
   const contentOpacity = useRef(new Animated.Value(0)).current;
   const [autoSync, setAutoSync] = React.useState(true);
 
-  const newTransactions = syncTransactions.filter((t) => t.status === 'new').slice(0, 5);
-  const totalNewCount = syncTransactions.filter((t) => t.status === 'new').length;
+  const newTransactions: Array<{
+    id: string;
+    title: string;
+    amount: number;
+    category: string;
+    date: string;
+    status: string;
+  }> = [];
+  const totalNewCount = 0;
 
   const mockAccount = {
     accountName: 'Chase Total Checking',

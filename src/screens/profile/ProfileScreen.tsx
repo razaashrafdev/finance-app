@@ -27,7 +27,7 @@ interface ProfileScreenProps {
 const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
   const { colors, isDark } = useTheme();
   const toast = useToast();
-  const { user: userProfile, updateUser, changePassword } = useAppStore();
+  const { user: userProfile, updateUser, changePassword, logout } = useAppStore();
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [changePasswordVisible, setChangePasswordVisible] = useState(false);
@@ -128,6 +128,12 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
       icon: 'download-outline',
       iconColor: '#0EA5E9',
       onPress: () => toast.show('Export started', 'info'),
+    },
+    {
+      label: 'Logout',
+      icon: 'log-out-outline',
+      iconColor: '#EF4444',
+      onPress: () => logout(),
     },
   ];
 

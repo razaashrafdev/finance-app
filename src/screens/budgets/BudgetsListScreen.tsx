@@ -11,7 +11,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../theme/ThemeContext';
 import Card from '../../components/common/Card';
 import Badge from '../../components/common/Badge';
-import { categories } from '../../data/mockData';
+import { resolveCategories } from '../../data/categories';
 import { formatCurrency } from '../../utils/format';
 import { spacing, borderRadius } from '../../theme/spacing';
 import { useAppStore } from '../../store/AppStore';
@@ -28,7 +28,8 @@ const MONTHS = [
 
 const BudgetsListScreen: React.FC<BudgetsListScreenProps> = ({ navigation }) => {
   const { colors } = useTheme();
-  const { budgets, transactions } = useAppStore();
+  const { budgets, transactions, categories: storeCategories } = useAppStore();
+  const categories = resolveCategories(storeCategories);
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
 
