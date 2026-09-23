@@ -107,3 +107,34 @@ export async function changePassword(currentPassword: string, newPassword: strin
     body: { currentPassword, newPassword },
   });
 }
+
+export async function startDriveOAuth() {
+  return apiRequest<{ url: string }>('/api/drive/auth', {
+    method: 'GET',
+  });
+}
+
+export async function checkDriveStatus() {
+  return apiRequest<{ connected: boolean; userId: string; driveFolderId?: string; driveFileId?: string; connectedAt?: string }>('/api/drive/status', {
+    method: 'GET',
+  });
+}
+
+export async function loadDriveData() {
+  return apiRequest<{ data: Record<string, any> }>('/api/drive/data', {
+    method: 'GET',
+  });
+}
+
+export async function syncDriveData(data: Record<string, any>) {
+  return apiRequest<{ message: string; driveFileId: string }>('/api/drive/sync', {
+    method: 'POST',
+    body: { data },
+  });
+}
+
+export async function disconnectDrive() {
+  return apiRequest<{ message: string }>('/api/drive/disconnect', {
+    method: 'POST',
+  });
+}

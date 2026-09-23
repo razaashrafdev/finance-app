@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -13,10 +13,10 @@ import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import Badge from '../../components/common/Badge';
 import { useToast } from '../../components/common/Toast';
-import { reportData } from '../../data/mockData';
 import { formatCurrency } from '../../utils/format';
 import { spacing, borderRadius } from '../../theme/spacing';
 import { useAppStore } from '../../store/AppStore';
+import { resolveCategories } from '../../data/categories';
 
 interface ReportsScreenProps {
   navigation: any;
@@ -28,22 +28,89 @@ type DateRange = typeof DATE_RANGES[number];
 const ReportsScreen: React.FC<ReportsScreenProps> = ({ navigation }) => {
   const { colors } = useTheme();
   const toast = useToast();
-  const { transactions } = useAppStore();
+  const { transactions, categories: storeCategories } = useAppStore();
+  const categories = resolveCategories(storeCategories);
   const [selectedRange, setSelectedRange] = useState<DateRange>('This Month');
 
   const totalIncome = transactions
     .filter((t) => t.type === 'income')
-    .reduce((sum, t) => sum + t.amount, 0);
+    .reduce((sum, t) => sum + Math.abs(Number(t.amount) || 0), 0);
   const totalExpenses = Math.abs(
     transactions
       .filter((t) => t.type === 'expense')
-      .reduce((sum, t) => sum + t.amount, 0)
+      .reduce((sum, t) => sum + Math.abs(Number(t.amount) || 0), 0)
   );
   const netSavings = totalIncome - totalExpenses;
   const savingsRate = totalIncome > 0 ? ((netSavings / totalIncome) * 100).toFixed(1) : '0.0';
 
+  const reportData = useMemo(() => {
+    const monthMap = new Map<string, { month: string; income: number; expense: number; sortKey: string }>();
+    const expenseByCat: Record<string, number> = {};
+    const incomeBySource: Record<string, number> = {};
+
+    for (const t of transactions) {
+      const d = new Date(t.date);
+      if (Number.isNaN(d.getTime())) continue;
+      const sortKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      const month = d.toLocaleDateString('en-US', { month: 'short' });
+      const entry = monthMap.get(sortKey) || { month, income: 0, expense: 0, sortKey };
+      const amount = Math.abs(Number(t.amount) || 0);
+      if (t.type === 'income') {
+        entry.income += amount;
+        const source = t.subcategory || t.category || 'Other';
+        incomeBySource[source] = (incomeBySource[source] || 0) + amount;
+      } else if (t.type === 'expense') {
+        entry.expense += amount;
+        const cat = t.category || 'Other';
+        expenseByCat[cat] = (expenseByCat[cat] || 0) + amount;
+      }
+      monthMap.set(sortKey, entry);
+    }
+
+    const monthlyTrend = Array.from(monthMap.values())
+      .sort((a, b) => a.sortKey.localeCompare(b.sortKey))
+      .slice(-6)
+      .map(({ month, income, expense }) => ({
+        month,
+        income,
+        expense,
+        savings: income - expense,
+      }));
+
+    const expenseTotal = Object.values(expenseByCat).reduce((s, v) => s + v, 0);
+    const incomeTotal = Object.values(incomeBySource).reduce((s, v) => s + v, 0);
+
+    const expenseBreakdown = Object.entries(expenseByCat)
+      .map(([category, amount]) => ({
+        category,
+        amount,
+        percentage: expenseTotal > 0 ? Number(((amount / expenseTotal) * 100).toFixed(2)) : 0,
+      }))
+      .sort((a, b) => b.amount - a.amount);
+
+    const incomeBreakdown = Object.entries(incomeBySource)
+      .map(([source, amount]) => ({
+        source,
+        amount,
+        percentage: incomeTotal > 0 ? Number(((amount / incomeTotal) * 100).toFixed(2)) : 0,
+      }))
+      .sort((a, b) => b.amount - a.amount);
+
+    const categoryAnalysis = Object.entries(expenseByCat).map(([category, amount]) => ({
+      category,
+      monthlyAvg: amount,
+      trend: 'stable' as const,
+      yearOverYear: 0,
+      color: categories[category]?.color,
+    }));
+
+    return { monthlyTrend, categoryAnalysis, incomeBreakdown, expenseBreakdown };
+  }, [transactions, categories]);
+
   const maxBarValue = Math.max(
-    ...reportData.monthlyTrend.map((m) => Math.max(m.income, m.expense))
+    1,
+    ...reportData.monthlyTrend.map((m) => Math.max(m.income, m.expense)),
+    0
   );
 
   const getTrendIcon = (trend: string) => {

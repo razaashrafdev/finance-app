@@ -11,7 +11,7 @@ import {
 import { ScreenScrollView } from '../../components/common/ScreenScroll';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../theme/ThemeContext';
-import { notifications as mockNotifications } from '../../data/mockData';
+import { useAppStore } from '../../store/AppStore';
 import { spacing, borderRadius } from '../../theme/spacing';
 import Badge from '../../components/common/Badge';
 import EmptyState from '../../components/common/EmptyState';
@@ -58,9 +58,16 @@ function getRelativeTime(dateStr: string): string {
 
 const NotificationsScreen: React.FC<NotificationsScreenProps> = ({ navigation }) => {
   const { colors, isDark } = useTheme();
+  const {
+    notifications: storeNotifications,
+    markNotificationRead,
+    markAllNotificationsRead,
+  } = useAppStore();
   const [activeFilter, setActiveFilter] = useState<FilterTab>('all');
-  const [notifications, setNotifications] = useState(mockNotifications);
+  const [hiddenIds, setHiddenIds] = useState<Set<string>>(new Set());
   const [refreshing, setRefreshing] = useState(false);
+
+  const notifications = storeNotifications.filter((n: any) => !hiddenIds.has(n.id));
 
   const filters: { key: FilterTab; label: string }[] = [
     { key: 'all', label: 'All' },
@@ -90,17 +97,15 @@ const NotificationsScreen: React.FC<NotificationsScreenProps> = ({ navigation })
   const filtered = getFilteredNotifications();
 
   const markAsRead = (id: string) => {
-    setNotifications((prev) =>
-      prev.map((n: any) => (n.id === id ? { ...n, isRead: true } : n))
-    );
+    markNotificationRead(id);
   };
 
   const markAllRead = () => {
-    setNotifications((prev) => prev.map((n: any) => ({ ...n, isRead: true })));
+    markAllNotificationsRead();
   };
 
   const deleteNotification = (id: string) => {
-    setNotifications((prev) => prev.filter((n: any) => n.id !== id));
+    setHiddenIds((prev) => new Set(prev).add(id));
   };
 
   const onRefresh = useCallback(() => {

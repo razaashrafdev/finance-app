@@ -240,7 +240,7 @@ const BankConnectedScreen: React.FC<BankConnectedScreenProps> = ({
         <TouchableOpacity
           style={styles.doneLink}
           activeOpacity={0.7}
-          onPress={() => navigation.navigate('HomeTab')}
+          onPress={() => navigation.navigate('MainTabs', { screen: 'HomeTab' })}
         >
           <Text style={[styles.doneText, { color: colors.textSecondary }]}>
             Done

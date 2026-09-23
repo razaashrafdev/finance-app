@@ -12,7 +12,8 @@ import {
 import { ScreenScrollView } from '../../components/common/ScreenScroll';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../theme/ThemeContext';
-import { syncTransactions, availableBanks, categories } from '../../data/mockData';
+import { availableBanks } from '../../data/banks';
+import { resolveCategories } from '../../data/categories';
 import { formatCurrency, formatDate } from '../../utils/format';
 import { spacing, borderRadius, shadow } from '../../theme/spacing';
 import Button from '../../components/common/Button';
@@ -42,11 +43,14 @@ function getBankColor(bankId: string): string {
   return bank?.color || '#4F46E5';
 }
 
-function getCategoryColor(category: string): string {
+function getCategoryColor(
+  category: string,
+  categories: Record<string, { icon: string; color: string }>
+): string {
   const key = Object.keys(categories).find(
     (k) => k.toLowerCase() === category.toLowerCase()
   );
-  return key ? (categories as any)[key]?.color || '#607D8B' : '#607D8B';
+  return key ? categories[key]?.color || '#607D8B' : '#607D8B';
 }
 
 // ─── Types ────────────────────────────────────────────────────
@@ -65,7 +69,8 @@ const AccountDetailScreen: React.FC<AccountDetailScreenProps> = ({
 }) => {
   const { colors, isDark } = useTheme();
   const toast = useToast();
-  const { connectedAccounts } = useAppStore();
+  const { connectedAccounts, transactions, categories: storeCategories } = useAppStore();
+  const categories = resolveCategories(storeCategories);
 
   const accountId = route.params?.accountId;
   const account =
@@ -84,8 +89,8 @@ const AccountDetailScreen: React.FC<AccountDetailScreenProps> = ({
   const [showDisconnectSheet, setShowDisconnectSheet] = useState(false);
   const [isReconnecting, setIsReconnecting] = useState(false);
 
-  const recentTransactions = syncTransactions
-    .filter((t) => t.accountId === account.id)
+  const recentTransactions = transactions
+    .filter((t) => t.accountId === account?.id || t.accountName === account?.accountName)
     .slice(0, 5);
 
   // ─── Sync Handler ─────────────────────────────────────────
@@ -497,7 +502,7 @@ const AccountDetailScreen: React.FC<AccountDetailScreenProps> = ({
           {recentTransactions.length > 0 ? (
             <Card variant="elevated" style={styles.transactionCard}>
               {recentTransactions.map((txn, index) => {
-                const catColor = getCategoryColor(txn.category);
+                const catColor = getCategoryColor(txn.category, categories);
                 return (
                   <View key={txn.id}>
                     <View style={styles.transactionRow}>

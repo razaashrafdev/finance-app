@@ -2,14 +2,14 @@ import React from 'react';
 import {
   View,
   Text,
-  StyleSheet,
+  StyleSheet,
   TouchableOpacity,
   StatusBar
 } from 'react-native';
 import { ScreenScrollView } from '../../components/common/ScreenScroll';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../theme/ThemeContext';
-import { availableBanks } from '../../data/mockData';
+import { availableBanks } from '../../data/banks';
 import { formatCurrency } from '../../utils/format';
 import { spacing, borderRadius, shadow } from '../../theme/spacing';
 import Button from '../../components/common/Button';

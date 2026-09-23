@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   View,
   Text,
@@ -14,8 +14,9 @@ import { useTheme } from '../../theme/ThemeContext';
 import Avatar from '../../components/common/Avatar';
 import ProgressRing from '../../components/common/ProgressRing';
 import TransactionRow from '../../components/common/TransactionRow';
-import { monthlyIncomeVsExpense, spendingBreakdown } from '../../data/mockData';
+import { resolveCategories } from '../../data/categories';
 import { useAppStore } from '../../store/AppStore';
+import DriveConnectPrompt from '../../components/common/DriveConnectPrompt';
 import { formatCurrency, formatShortDate, getGreeting } from '../../utils/format';
 import { spacing, borderRadius } from '../../theme/spacing';
 
@@ -44,8 +45,53 @@ interface HomeScreenProps {
 const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const { colors, isDark } = useTheme();
   const theme = { colors, dark: isDark };
-  const { user: userProfile, accounts, transactions, budgets, savingsGoals, bills, notifications } = useAppStore();
+  const {
+    user: userProfile,
+    accounts,
+    transactions,
+    budgets,
+    savingsGoals,
+    bills,
+    notifications,
+    categories: storeCategories,
+  } = useAppStore();
   const notificationCount = notifications.filter((item) => !item.isRead).length;
+  const categories = resolveCategories(storeCategories);
+
+  const monthlyIncomeVsExpense = useMemo(() => {
+    const map = new Map<string, { month: string; income: number; expense: number; sortKey: string }>();
+    for (const t of transactions) {
+      const d = new Date(t.date);
+      if (Number.isNaN(d.getTime())) continue;
+      const sortKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      const month = d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+      const entry = map.get(sortKey) || { month, income: 0, expense: 0, sortKey };
+      if (t.type === 'income') entry.income += Math.abs(Number(t.amount) || 0);
+      else if (t.type === 'expense') entry.expense += Math.abs(Number(t.amount) || 0);
+      map.set(sortKey, entry);
+    }
+    return Array.from(map.values())
+      .sort((a, b) => a.sortKey.localeCompare(b.sortKey))
+      .slice(-6);
+  }, [transactions]);
+
+  const spendingBreakdown = useMemo(() => {
+    const map: Record<string, number> = {};
+    for (const t of transactions) {
+      if (t.type !== 'expense') continue;
+      const cat = t.category || 'Other';
+      map[cat] = (map[cat] || 0) + Math.abs(Number(t.amount) || 0);
+    }
+    const total = Object.values(map).reduce((sum, v) => sum + v, 0);
+    return Object.entries(map)
+      .map(([category, amount]) => ({
+        category,
+        amount,
+        color: categories[category]?.color || '#607d8b',
+        percentage: total > 0 ? (amount / total) * 100 : 0,
+      }))
+      .sort((a, b) => b.amount - a.amount);
+  }, [transactions, categories]);
 
   const totalBalance = accounts.reduce((sum: number, acc: any) => sum + acc.balance, 0);
   const totalIncome = monthlyIncomeVsExpense[monthlyIncomeVsExpense.length - 1]?.income || 0;
@@ -86,7 +132,9 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   };
 
   const maxBarValue = Math.max(
-    ...monthlyIncomeVsExpense.map((m) => Math.max(m.income, m.expense))
+    1,
+    ...monthlyIncomeVsExpense.map((m) => Math.max(m.income, m.expense)),
+    0
   );
 
   const styles = StyleSheet.create({
@@ -556,6 +604,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
         contentContainerStyle={[styles.scrollContent, { paddingBottom: 156 }]}
         showsVerticalScrollIndicator={false}
       >
+        <DriveConnectPrompt />
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.greetingContainer}>

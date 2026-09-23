@@ -370,7 +370,13 @@ const AddTransferScreen: React.FC<AddTransferProps> = ({ navigation }) => {
         <Text style={[styles.headerTitle, { color: colors.text }]}>
           Transfer Money
         </Text>
-        <View style={styles.headerRight} />
+        <TouchableOpacity
+          onPress={handleTransferNow}
+          style={[styles.headerSaveButton, { backgroundColor: colors.primary }]}
+          activeOpacity={0.85}
+        >
+          <Text style={styles.headerSaveText}>Save</Text>
+        </TouchableOpacity>
       </View>
 
       <ScreenScrollView
@@ -625,6 +631,19 @@ const styles = StyleSheet.create({
   },
   headerRight: {
     width: 36,
+  },
+  headerSaveButton: {
+    minWidth: 64,
+    height: 36,
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  headerSaveText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '700',
   },
   scrollContent: {
     padding: spacing.screenPadding,

@@ -96,3 +96,53 @@ export async function clearSession() {
     // A failed delete should still let the user leave the signed-in screens.
   }
 }
+
+const PENDING_SIGNUP_KEY = 'financeflow.pendingSignup';
+
+export async function savePendingSignup(email: string, fullName: string) {
+  await setItem(PENDING_SIGNUP_KEY, JSON.stringify({ email, fullName }));
+}
+
+export async function getPendingSignup(): Promise<{ email: string; fullName: string } | null> {
+  try {
+    const raw = await getItem(PENDING_SIGNUP_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+export async function clearPendingSignup() {
+  try {
+    await deleteItem(PENDING_SIGNUP_KEY);
+  } catch {
+    // Ignore
+  }
+}
+
+const DRIVE_PROMPT_KEY = 'financeflow.drivePrompt';
+
+export async function saveDrivePromptPending() {
+  await setItem(DRIVE_PROMPT_KEY, String(Date.now()));
+}
+
+export async function getDrivePromptAgeMs(): Promise<number | null> {
+  try {
+    const raw = await getItem(DRIVE_PROMPT_KEY);
+    if (!raw) return null;
+    const startedAt = Number(raw);
+    if (!Number.isFinite(startedAt) || startedAt <= 0) return 0;
+    return Date.now() - startedAt;
+  } catch {
+    return null;
+  }
+}
+
+export async function clearDrivePromptPending() {
+  try {
+    await deleteItem(DRIVE_PROMPT_KEY);
+  } catch {
+    // Ignore
+  }
+}

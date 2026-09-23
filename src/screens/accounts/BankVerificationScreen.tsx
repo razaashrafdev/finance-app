@@ -16,7 +16,7 @@ import { useTheme } from '../../theme/ThemeContext';
 import { spacing, borderRadius } from '../../theme/spacing';
 import Input from '../../components/common/Input';
 import Button from '../../components/common/Button';
-import { availableBanks, bankConnectionSteps } from '../../data/mockData';
+import { availableBanks, bankConnectionSteps } from '../../data/banks';
 
 interface BankVerificationScreenProps {
   navigation: any;

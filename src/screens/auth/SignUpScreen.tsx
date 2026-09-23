@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -21,10 +21,10 @@ interface SignUpScreenProps {
 
 export default function SignUpScreen({ navigation }: SignUpScreenProps) {
   const { colors } = useTheme();
-  const { signup, verifySignupCode, resendSignupCode } = useAppStore();
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [email, setEmail] = useState('');
+  const { signup, verifySignupCode, resendSignupCode, cancelPendingSignup, pendingSignup } = useAppStore();
+  const [firstName, setFirstName] = useState(() => (pendingSignup?.fullName || '').split(' ')[0] || '');
+  const [lastName, setLastName] = useState(() => (pendingSignup?.fullName || '').split(' ').slice(1).join(' ') || '');
+  const [email, setEmail] = useState(() => pendingSignup?.email || '');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -32,11 +32,20 @@ export default function SignUpScreen({ navigation }: SignUpScreenProps) {
   const [agreed, setAgreed] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [verificationSent, setVerificationSent] = useState(false);
+  const [verificationSent, setVerificationSent] = useState(() => Boolean(pendingSignup?.email));
   const [code, setCode] = useState('');
   const [verifying, setVerifying] = useState(false);
   const [resending, setResending] = useState(false);
   const [notice, setNotice] = useState('');
+
+  useEffect(() => {
+    if (pendingSignup && pendingSignup.email) {
+      setEmail(pendingSignup.email);
+      setFirstName((pendingSignup.fullName || '').split(' ')[0] || '');
+      setLastName((pendingSignup.fullName || '').split(' ').slice(1).join(' ') || '');
+      setVerificationSent(true);
+    }
+  }, [pendingSignup]);
 
   const handleSignUp = async () => {
     if (!firstName.trim() || !email.trim() || !password) {
@@ -116,7 +125,7 @@ export default function SignUpScreen({ navigation }: SignUpScreenProps) {
 
           <Text style={[styles.verifyTitle, { color: colors.text }]}>Enter your code</Text>
           <Text style={[styles.verifySubtitle, { color: colors.textSecondary }]}>
-            We sent a 6-digit code to your email. Your account is created when the code is confirmed.
+            We sent a 6-digit code to your email. It stays valid for 30 minutes, so you can open Gmail, copy it, and come back.
           </Text>
 
           <View style={[styles.emailCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
@@ -183,6 +192,7 @@ export default function SignUpScreen({ navigation }: SignUpScreenProps) {
               setCode('');
               setError('');
               setNotice('');
+              void cancelPendingSignup();
             }}
           >
             <Text style={[styles.changeEmailText, { color: colors.textSecondary }]}>Use a different email</Text>

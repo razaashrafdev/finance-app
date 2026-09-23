@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 import { ScreenScrollView } from '../../components/common/ScreenScroll';
 import { useTheme } from '../../theme/ThemeContext';
-import { categories } from '../../data/mockData';
+import { resolveCategories } from '../../data/categories';
 import { useAppStore } from '../../store/AppStore';
 import { formatCurrency, formatDate, formatShortDate } from '../../utils/format';
 import Badge from '../../components/common/Badge';
@@ -29,7 +29,8 @@ interface TransactionDetailProps {
 
 const TransactionDetailScreen: React.FC<TransactionDetailProps> = ({ route, navigation }) => {
   const { colors, isDark } = useTheme();
-  const { transactions, deleteTransaction } = useAppStore();
+  const { transactions, deleteTransaction, categories: storeCategories } = useAppStore();
+  const categories = resolveCategories(storeCategories);
   const [showDeleteSheet, setShowDeleteSheet] = useState(false);
 
   const transactionId = route?.params?.transactionId;
