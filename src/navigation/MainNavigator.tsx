@@ -495,12 +495,16 @@ function AddButtonBottomSheet({
     setTimeout(() => {
       const nav = navigation as any;
       // AddButtonBottomSheet sits under RootStack (MainTabs screen), not inside Tab.Navigator.
-      // So navigate through MainTabs -> HomeTab/BudgetsTab/MoreTab.
+      // So navigate through MainTabs -> HomeTab/BudgetsTab/MoreTab/TransactionsTab.
       if (route === 'AddIncome' || route === 'AddExpense' || route === 'AddTransfer') {
         nav.navigate('MainTabs', { screen: 'HomeTab', params: { screen: route } });
       } else if (route === 'AddGoal') {
         nav.navigate('MainTabs', { screen: 'BudgetsTab', params: { screen: route } });
       } else if (route === 'BillsScreen') {
+        nav.navigate('MainTabs', { screen: 'MoreTab', params: { screen: route } });
+      } else if (route === 'TransactionsList') {
+        nav.navigate('MainTabs', { screen: 'TransactionsTab', params: { screen: route } });
+      } else if (route === 'AccountDetail' || route === 'AddAccount') {
         nav.navigate('MainTabs', { screen: 'MoreTab', params: { screen: route } });
       } else {
         nav.navigate('MainTabs', { screen: route });
@@ -546,9 +550,9 @@ function TabBarIcon({
 }
 
 function FloatingTabBar(props: BottomTabBarProps) {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { width: windowWidth } = useWindowDimensions();
-  const sideGap = 22;
+  const sideGap = 20;
   const tabBarWidth = windowWidth - sideGap * 2;
 
   // Hide the floating dock on nested screens (Add Income/Expense, details, etc.)
@@ -567,7 +571,10 @@ function FloatingTabBar(props: BottomTabBarProps) {
           {
             width: tabBarWidth,
             backgroundColor: colors.surface,
+            borderColor: colors.cardBorder,
+            borderWidth: 1,
             shadowColor: '#000',
+            shadowOpacity: isDark ? 0.45 : 0.1,
           },
         ]}
       >
@@ -750,29 +757,29 @@ const styles = StyleSheet.create({
     borderRadius: 29,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#4F46E5',
+    shadowColor: '#6366F1',
     shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.28,
-    shadowRadius: 10,
+    shadowOpacity: 0.38,
+    shadowRadius: 12,
     elevation: 10,
   },
 });
 
 const sheetStyles = StyleSheet.create({
   optionsContainer: {
-    gap: 12,
+    gap: 10,
   },
   option: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
-    borderRadius: 14,
+    padding: 14,
+    borderRadius: 16,
     borderWidth: 1,
   },
   iconContainer: {
     width: 44,
     height: 44,
-    borderRadius: 12,
+    borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
   },

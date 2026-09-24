@@ -101,6 +101,8 @@ const AddBudgetScreen: React.FC<AddBudgetScreenProps> = ({ navigation, route }) 
         style={styles.scrollView}
         contentContainerStyle={[styles.scrollContent, { paddingBottom: 156 }]}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        resetOnFocus={false}
       >
         {/* Category Selector */}
         <View style={styles.section}>

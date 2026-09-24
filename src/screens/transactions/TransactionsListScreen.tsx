@@ -8,6 +8,7 @@ import {
   StatusBar
 } from 'react-native';
 import { ScreenFlatList } from '../../components/common/ScreenScroll';
+import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../theme/ThemeContext';
 import { useAppStore } from '../../store/AppStore';
 import { resolveCategoryList } from '../../data/categories';
@@ -67,7 +68,7 @@ const TransactionsListScreen: React.FC = () => {
     }
 
     return result.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }, [searchQuery, activeFilter, selectedCategory]);
+  }, [transactions, searchQuery, activeFilter, selectedCategory]);
 
   const groupedTransactions = useMemo(() => {
     const groups: { title: string; data: typeof filteredTransactions }[] = [];
@@ -211,8 +212,16 @@ const TransactionsListScreen: React.FC = () => {
             style={[
               styles.chip,
               {
-                backgroundColor: selected ? colors.primary : colors.card,
-                borderColor: selected ? colors.primary : colors.border,
+                backgroundColor: selected
+                  ? colors.primary
+                  : isDark
+                  ? 'rgba(255, 255, 255, 0.05)'
+                  : colors.card,
+                borderColor: selected ? colors.primary : colors.cardBorder,
+                shadowColor: selected ? colors.primary : 'transparent',
+                shadowOpacity: selected && isDark ? 0.35 : selected ? 0.2 : 0,
+                shadowRadius: 6,
+                elevation: selected ? 3 : 0,
               },
             ]}
             onPress={() => setActiveFilter(filter)}
@@ -220,7 +229,10 @@ const TransactionsListScreen: React.FC = () => {
           >
             <Text
               numberOfLines={1}
-              style={[styles.chipText, { color: selected ? '#FFFFFF' : colors.text }]}
+              style={[
+                styles.chipText,
+                { color: selected ? '#FFFFFF' : colors.textSecondary },
+              ]}
             >
               {filter.charAt(0).toUpperCase() + filter.slice(1)}
             </Text>
@@ -234,23 +246,25 @@ const TransactionsListScreen: React.FC = () => {
     <View style={styles.headerSection}>
       <View style={styles.filterRow}>
         <TouchableOpacity
-          style={[styles.filterButton, { backgroundColor: colors.card, borderColor: colors.border }]}
+          style={[styles.filterButton, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}
           onPress={() => setShowDateSheet(true)}
         >
+          <Ionicons name="calendar-outline" size={15} color={colors.primaryLight || colors.primary} style={{ marginRight: 6 }} />
           <Text style={[styles.filterButtonText, { color: colors.text }]}>
             {dateRanges.find((r) => r.value === dateFilter)?.label}
           </Text>
-          <Text style={[styles.filterIcon, { color: colors.textSecondary }]}>▼</Text>
+          <Ionicons name="chevron-down" size={14} color={colors.textSecondary} style={{ marginLeft: 6 }} />
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.filterButton, { backgroundColor: colors.card, borderColor: colors.border }]}
+          style={[styles.filterButton, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}
           onPress={() => setShowCategorySheet(true)}
         >
+          <Ionicons name="pricetag-outline" size={15} color={colors.secondary} style={{ marginRight: 6 }} />
           <Text style={[styles.filterButtonText, { color: colors.text }]}>
             {selectedCategory || 'All Categories'}
           </Text>
-          <Text style={[styles.filterIcon, { color: colors.textSecondary }]}>▼</Text>
+          <Ionicons name="chevron-down" size={14} color={colors.textSecondary} style={{ marginLeft: 6 }} />
         </TouchableOpacity>
       </View>
 
@@ -308,10 +322,21 @@ const TransactionsListScreen: React.FC = () => {
       <View style={[styles.header, { backgroundColor: colors.background, borderBottomColor: colors.border }]}>
         <Text style={[styles.title, { color: colors.text }]}>Transactions</Text>
         <TouchableOpacity
-          style={[styles.floatingButton, { backgroundColor: colors.primary }]}
+          style={[
+            styles.floatingButton,
+            {
+              backgroundColor: colors.primary,
+              borderRadius: 14,
+              shadowColor: colors.primary,
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: isDark ? 0.35 : 0.2,
+              shadowRadius: 8,
+              elevation: 4,
+            },
+          ]}
           onPress={() => setShowCategorySheet(true)}
         >
-          <Text style={styles.floatingButtonText}>⊞</Text>
+          <Ionicons name="filter" size={18} color="#FFFFFF" />
         </TouchableOpacity>
       </View>
 

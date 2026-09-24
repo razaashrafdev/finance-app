@@ -120,6 +120,8 @@ const AddGoalScreen: React.FC<AddGoalScreenProps> = ({ navigation, route }) => {
         style={styles.scrollView}
         contentContainerStyle={[styles.scrollContent, { paddingBottom: 156 }]}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        resetOnFocus={false}
       >
         {/* Goal Name */}
         <View style={styles.section}>

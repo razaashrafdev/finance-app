@@ -15,21 +15,32 @@ function assignRef<T>(ref: React.ForwardedRef<T>, value: T | null) {
   }
 }
 
-function useOpenFromTop(reset: () => void) {
+function useOpenFromTop(reset: () => void, enabled: boolean) {
   useFocusEffect(
     useCallback(() => {
+      if (!enabled) {
+        return undefined;
+      }
       reset();
       const frame = requestAnimationFrame(reset);
       return () => {
         cancelAnimationFrame(frame);
-        reset();
       };
-    }, [reset]),
+    }, [reset, enabled]),
   );
 }
 
-export const ScreenScrollView = forwardRef<ScrollView, ScrollViewProps>(
-  function ScreenScrollView(props, ref) {
+type ScreenScrollProps = ScrollViewProps & {
+  /** When true (default), jump to top each time the screen gains focus. Disable on forms. */
+  resetOnFocus?: boolean;
+};
+
+type ScreenListProps = FlatListProps<any> & {
+  resetOnFocus?: boolean;
+};
+
+export const ScreenScrollView = forwardRef<ScrollView, ScreenScrollProps>(
+  function ScreenScrollView({ resetOnFocus = true, ...props }, ref) {
     const innerRef = useRef<ScrollView>(null);
     const reset = useCallback(() => {
       try {
@@ -38,10 +49,12 @@ export const ScreenScrollView = forwardRef<ScrollView, ScrollViewProps>(
         // Scroll view may not be laid out yet.
       }
     }, []);
-    useOpenFromTop(reset);
+    useOpenFromTop(reset, resetOnFocus);
 
     return (
       <ScrollView
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
         {...props}
         ref={(node) => {
           innerRef.current = node;
@@ -52,8 +65,8 @@ export const ScreenScrollView = forwardRef<ScrollView, ScrollViewProps>(
   },
 );
 
-export const ScreenFlatList = forwardRef<FlatList<any>, FlatListProps<any>>(
-  function ScreenFlatList(props, ref) {
+export const ScreenFlatList = forwardRef<FlatList<any>, ScreenListProps>(
+  function ScreenFlatList({ resetOnFocus = true, ...props }, ref) {
     const innerRef = useRef<FlatList<any>>(null);
     const reset = useCallback(() => {
       try {
@@ -62,10 +75,12 @@ export const ScreenFlatList = forwardRef<FlatList<any>, FlatListProps<any>>(
         // List may not be laid out yet.
       }
     }, []);
-    useOpenFromTop(reset);
+    useOpenFromTop(reset, resetOnFocus);
 
     return (
       <FlatList
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
         {...props}
         ref={(node) => {
           innerRef.current = node;

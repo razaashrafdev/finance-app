@@ -10,12 +10,14 @@ import {
 } from 'react-native';
 import { ScreenScrollView } from '../../components/common/ScreenScroll';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../../theme/ThemeContext';
 import { useAppStore } from '../../store/AppStore';
 import { formatCurrency, formatDate } from '../../utils/format';
 import { spacing, borderRadius, shadow } from '../../theme/spacing';
 import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
+import Badge from '../../components/common/Badge';
 import { useToast } from '../../components/common/Toast';
 
 type Step = 'upload' | 'processing' | 'preview' | 'review' | 'success';
@@ -159,7 +161,7 @@ export default function BankStatementScreen({ navigation }: { navigation: any })
   const currentStepIndex = steps.indexOf(step);
 
   const renderStepIndicator = () => (
-    <View style={[styles.stepIndicator, { backgroundColor: colors.card, borderColor: colors.border }]}>
+    <View style={[styles.stepIndicator, { backgroundColor: colors.card, borderColor: colors.cardBorder || colors.border }]}>
       {steps.map((s, index) => {
         const isActive = index === currentStepIndex;
         const isCompleted = index < currentStepIndex;
@@ -169,24 +171,38 @@ export default function BankStatementScreen({ navigation }: { navigation: any })
               style={[
                 styles.stepCircle,
                 {
-                  backgroundColor: isCompleted ? colors.primary : isActive ? colors.primary + '20' : colors.inputBg,
-                  borderColor: isActive ? colors.primary : colors.border,
+                  backgroundColor: isCompleted ? colors.primary : isActive ? colors.primary + '25' : colors.inputBg,
+                  borderColor: isActive ? colors.primary : isCompleted ? colors.primary : colors.cardBorder || colors.border,
                 },
               ]}
             >
               {isCompleted ? (
-                <Ionicons name="checkmark" size={14} color="#fff" />
+                <Ionicons name="checkmark" size={13} color="#fff" />
               ) : (
                 <Text style={[styles.stepNumber, { color: isActive ? colors.primary : colors.textTertiary }]}>
                   {index + 1}
                 </Text>
               )}
             </View>
-            <Text style={[styles.stepLabel, { color: isActive ? colors.primary : colors.textTertiary }]}>
-              {s === 'upload' ? 'Upload' : s === 'processing' ? 'Processing' : s === 'preview' ? 'Preview' : s === 'review' ? 'Review' : 'Done'}
+            <Text
+              style={[
+                styles.stepLabel,
+                {
+                  color: isActive ? colors.primary : isCompleted ? colors.text : colors.textTertiary,
+                  fontWeight: isActive ? '700' : '500',
+                },
+              ]}
+              numberOfLines={1}
+            >
+              {s === 'upload' ? 'Upload' : s === 'processing' ? 'Parse' : s === 'preview' ? 'Preview' : s === 'review' ? 'Review' : 'Done'}
             </Text>
             {index < steps.length - 1 && (
-              <View style={[styles.stepLine, { backgroundColor: index < currentStepIndex ? colors.primary : colors.border }]} />
+              <View
+                style={[
+                  styles.stepLine,
+                  { backgroundColor: index < currentStepIndex ? colors.primary : colors.borderLight || colors.border },
+                ]}
+              />
             )}
           </View>
         );
@@ -195,55 +211,75 @@ export default function BankStatementScreen({ navigation }: { navigation: any })
   );
 
   const renderUploadStep = () => (
-    <View style={{ flex: 1 }}>
-      <Text style={[styles.sectionTitle, { color: colors.text }]}>Import Bank Statement</Text>
-      <Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>
-        Upload your monthly bank statement PDF to import transactions
-      </Text>
+    <View style={{ flex: 1, paddingHorizontal: spacing.lg }}>
+      <View style={styles.stepHeader}>
+        <Badge variant="primary" label="AI-POWERED STATEMENT PARSING" size="sm" dot />
+        <Text style={[styles.sectionTitle, { color: colors.text, marginTop: spacing.sm }]}>Import Bank Statement</Text>
+        <Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>
+          Upload your PDF statement to automatically extract, categorize, and sync transactions.
+        </Text>
+      </View>
 
-      <View style={[styles.uploadCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-        <View style={[styles.uploadBox, { borderColor: colors.border, backgroundColor: colors.inputBg }]}>
-          <Ionicons name="document-text-outline" size={48} color={colors.primary} />
+      <View style={[styles.uploadCard, { backgroundColor: colors.card, borderColor: colors.cardBorder || colors.border }]}>
+        <View style={[styles.uploadBox, { borderColor: colors.primary + '50', backgroundColor: colors.primary + '08' }]}>
+          <View style={styles.uploadIconBubble}>
+            <Ionicons name="cloud-upload" size={32} color={colors.primary} />
+          </View>
           <Text style={[styles.uploadTitle, { color: colors.text }]}>Upload Statement PDF</Text>
           <Text style={[styles.uploadSubtitle, { color: colors.textSecondary }]}>
-            Tap to browse or drag and drop your bank statement
+            Drag & drop or tap to browse your monthly statement
           </Text>
-          <Text style={[styles.fileFormat, { color: colors.textTertiary }]}>PDF up to 10MB</Text>
+          <View style={styles.formatBadge}>
+            <Ionicons name="document-text-outline" size={13} color={colors.textTertiary} />
+            <Text style={[styles.fileFormat, { color: colors.textTertiary }]}>PDF up to 10MB</Text>
+          </View>
         </View>
 
         <TouchableOpacity
-          style={[styles.browseButton, { backgroundColor: colors.primary + '15', borderColor: colors.primary + '30' }]}
+          style={[styles.browseButton, { backgroundColor: colors.primary + '18', borderColor: colors.primary + '35' }]}
           activeOpacity={0.7}
           onPress={() => toast.show('PDF uploaded: Chase_Statement_Sep_2026.pdf', 'success')}
         >
-          <Ionicons name="folder-open-outline" size={20} color={colors.primary} />
+          <Ionicons name="folder-open" size={18} color={colors.primary} />
           <Text style={[styles.browseButtonText, { color: colors.primary }]}>Browse Files</Text>
         </TouchableOpacity>
       </View>
 
-      <View style={[styles.accountSection, { backgroundColor: colors.card, borderColor: colors.border }]}>
-        <Text style={[styles.sectionLabel, { color: colors.text }]}>Select Account</Text>
-        {connectedAccounts.map((account: any) => (
-          <TouchableOpacity
-            key={account.id}
-            style={[
-              styles.accountOption,
-              { backgroundColor: selectedAccountId === account.id ? colors.primary + '10' : colors.inputBg, borderColor: selectedAccountId === account.id ? colors.primary : colors.border },
-            ]}
-            onPress={() => handleAccountSelect(account.id)}
-          >
-            <View style={styles.accountOptionInfo}>
-              <Text style={[styles.accountOptionName, { color: colors.text }]}>{account.accountName}</Text>
-              <Text style={[styles.accountOptionBank, { color: colors.textSecondary }]}>{account.bankName}</Text>
-            </View>
-            {selectedAccountId === account.id && (
-              <Ionicons name="checkmark-circle" size={20} color={colors.primary} />
-            )}
-          </TouchableOpacity>
-        ))}
+      <View style={[styles.accountSection, { backgroundColor: colors.card, borderColor: colors.cardBorder || colors.border }]}>
+        <View style={styles.accountSectionHeader}>
+          <Text style={[styles.sectionLabel, { color: colors.text }]}>Target Account</Text>
+          <Text style={[styles.sectionLabelSub, { color: colors.textTertiary }]}>Select destination</Text>
+        </View>
+        {connectedAccounts.map((account: any) => {
+          const isSelected = selectedAccountId === account.id;
+          return (
+            <TouchableOpacity
+              key={account.id}
+              style={[
+                styles.accountOption,
+                {
+                  backgroundColor: isSelected ? colors.primary + '12' : colors.inputBg,
+                  borderColor: isSelected ? colors.primary : colors.cardBorder || colors.border,
+                },
+              ]}
+              onPress={() => handleAccountSelect(account.id)}
+            >
+              <View style={[styles.accountOptionIcon, { backgroundColor: isSelected ? colors.primary + '20' : colors.card }]}>
+                <Ionicons name="business" size={20} color={isSelected ? colors.primary : colors.textSecondary} />
+              </View>
+              <View style={styles.accountOptionInfo}>
+                <Text style={[styles.accountOptionName, { color: colors.text }]}>{account.accountName}</Text>
+                <Text style={[styles.accountOptionBank, { color: colors.textSecondary }]}>{account.bankName}</Text>
+              </View>
+              <View style={[styles.radioCircle, { borderColor: isSelected ? colors.primary : colors.border, backgroundColor: isSelected ? colors.primary : 'transparent' }]}>
+                {isSelected && <Ionicons name="checkmark" size={12} color="#fff" />}
+              </View>
+            </TouchableOpacity>
+          );
+        })}
       </View>
 
-      <View style={{ marginTop: spacing.lg }}>
+      <View style={{ marginTop: spacing.xl }}>
         <Button
           title="Start Import"
           onPress={handleUploadPress}
@@ -260,8 +296,10 @@ export default function BankStatementScreen({ navigation }: { navigation: any })
 
   const renderProcessingStep = () => (
     <View style={[styles.centeredView, { backgroundColor: colors.background }]}>
-      <View style={[styles.processingCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-        <Ionicons name="cloud-upload-outline" size={64} color={colors.primary} />
+      <View style={[styles.processingCard, { backgroundColor: colors.card, borderColor: colors.cardBorder || colors.border }]}>
+        <View style={styles.processingIconBubble}>
+          <Ionicons name="cloud-upload" size={40} color={colors.primary} />
+        </View>
         <Text style={[styles.processingTitle, { color: colors.text }]}>Processing Statement</Text>
         <Text style={[styles.processingSubtitle, { color: colors.textSecondary }]}>
           {mockStatement.bankName} — {mockStatement.month} {mockStatement.year}
@@ -274,9 +312,12 @@ export default function BankStatementScreen({ navigation }: { navigation: any })
 
         <View style={{ flexDirection: 'row', gap: spacing.md, marginTop: spacing.md }}>
           {['Extracting', 'Parsing', 'Validating'].map((label, i) => (
-            <Text key={label} style={[styles.miniProgressLabel, { color: i === Math.floor(processingProgress / 33) ? colors.primary : colors.textTertiary }]}>
-              {label}
-            </Text>
+            <Badge
+              key={label}
+              label={label}
+              variant={i <= Math.floor(processingProgress / 33) ? 'primary' : 'gray'}
+              size="sm"
+            />
           ))}
         </View>
       </View>
@@ -289,20 +330,20 @@ export default function BankStatementScreen({ navigation }: { navigation: any })
     const totalExpense = selectedTxns.filter((t) => t.type === 'expense').reduce((s, t) => s + Math.abs(t.amount), 0);
 
     return (
-      <View style={{ flex: 1 }}>
-        <View style={[styles.previewCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+      <View style={{ flex: 1, paddingHorizontal: spacing.lg }}>
+        <View style={[styles.previewCard, { backgroundColor: colors.card, borderColor: colors.cardBorder || colors.border }]}>
           <View style={styles.previewHeader}>
             <View>
               <Text style={[styles.previewBankName, { color: colors.text }]}>{mockStatement.bankName}</Text>
               <Text style={[styles.previewAccountName, { color: colors.textSecondary }]}>{mockStatement.accountName} ({mockStatement.accountNumber})</Text>
             </View>
             <View style={{ alignItems: 'flex-end' }}>
-              <Text style={[styles.previewPeriod, { color: colors.text }]}>{mockStatement.month} {mockStatement.year}</Text>
-              <Text style={[styles.previewAccountType, { color: colors.textTertiary }]}>Checking Account</Text>
+              <Badge variant="purple" label={`${mockStatement.month} ${mockStatement.year}`} size="sm" />
+              <Text style={[styles.previewAccountType, { color: colors.textTertiary, marginTop: 4 }]}>Checking</Text>
             </View>
           </View>
 
-          <View style={[styles.balanceRow, { borderBottomColor: colors.border }]}>
+          <View style={[styles.balanceRow, { borderBottomColor: colors.borderLight || colors.border }]}>
             <View>
               <Text style={[styles.balanceLabel, { color: colors.textSecondary }]}>Opening Balance</Text>
               <Text style={[styles.balanceValue, { color: colors.text }]}>{formatCurrency(mockStatement.openingBalance)}</Text>
@@ -314,53 +355,67 @@ export default function BankStatementScreen({ navigation }: { navigation: any })
           </View>
         </View>
 
-        <View style={[styles.summaryRow, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <View style={[styles.summaryRow, { backgroundColor: colors.card, borderColor: colors.cardBorder || colors.border }]}>
           <View style={styles.summaryItem}>
             <Text style={[styles.summaryItemLabel, { color: colors.textSecondary }]}>Income</Text>
             <Text style={[styles.summaryItemValue, { color: colors.positive || '#10B981' }]}>{formatCurrency(totalIncome)}</Text>
           </View>
+          <View style={styles.summaryDivider} />
           <View style={styles.summaryItem}>
             <Text style={[styles.summaryItemLabel, { color: colors.textSecondary }]}>Expenses</Text>
             <Text style={[styles.summaryItemValue, { color: colors.negative || '#EF4444' }]}>{formatCurrency(totalExpense)}</Text>
           </View>
+          <View style={styles.summaryDivider} />
           <View style={styles.summaryItem}>
-            <Text style={[styles.summaryItemLabel, { color: colors.textSecondary }]}>Transactions</Text>
+            <Text style={[styles.summaryItemLabel, { color: colors.textSecondary }]}>Count</Text>
             <Text style={[styles.summaryItemValue, { color: colors.primary }]}>{selectedCount}</Text>
           </View>
         </View>
 
-        <Text style={[styles.sectionTitle, { color: colors.text, marginTop: spacing.lg }]}>
-          Selected Transactions ({selectedCount})
-        </Text>
-        <ScreenScrollView style={{ maxHeight: 300 }} showsVerticalScrollIndicator={false}>
-          {mockStatement.transactions.map((t) => (
-            <TouchableOpacity
-              key={t.id}
-              style={[styles.transactionItem, { backgroundColor: colors.card, borderColor: colors.border }]}
-              onPress={() => toggleTransaction(t.id)}
-            >
-              <View style={[styles.transactionCheckbox, { backgroundColor: includedTxns.has(t.id) ? colors.primary : 'transparent', borderColor: colors.primary }]}>
-                {includedTxns.has(t.id) && <Ionicons name="checkmark" size={14} color="#fff" />}
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.transactionDesc, { color: colors.text }]}>{t.description}</Text>
-                <Text style={[styles.transactionCategory, { color: colors.textSecondary }]}>{t.category} — {formatDate(t.date)}</Text>
-              </View>
-              <Text style={[styles.transactionAmount, { color: t.type === 'income' ? colors.positive || '#10B981' : colors.negative || '#EF4444' }]}>
-                {formatCurrency(t.amount, true)}
-              </Text>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: spacing.lg, marginBottom: spacing.sm }}>
+          <Text style={[styles.sectionTitle, { color: colors.text, fontSize: 16, marginBottom: 0 }]}>
+            Select Transactions ({selectedCount})
+          </Text>
+          <View style={{ flexDirection: 'row', gap: spacing.xs }}>
+            <TouchableOpacity style={[styles.pillBtn, { borderColor: colors.border }]} onPress={selectAll}>
+              <Text style={[styles.pillBtnText, { color: colors.primary }]}>Select All</Text>
             </TouchableOpacity>
-          ))}
-        </ScreenScrollView>
-
-        <View style={{ flexDirection: 'row', gap: spacing.md, marginTop: spacing.md }}>
-          <TouchableOpacity style={[styles.actionButton, { backgroundColor: colors.inputBg, borderColor: colors.border }]} onPress={deselectAll}>
-            <Text style={[styles.actionButtonText, { color: colors.textSecondary }]}>Deselect All</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={[styles.actionButton, { backgroundColor: colors.inputBg, borderColor: colors.border }]} onPress={selectAll}>
-            <Text style={[styles.actionButtonText, { color: colors.primary }]}>Select All</Text>
-          </TouchableOpacity>
+            <TouchableOpacity style={[styles.pillBtn, { borderColor: colors.border }]} onPress={deselectAll}>
+              <Text style={[styles.pillBtnText, { color: colors.textTertiary }]}>Deselect</Text>
+            </TouchableOpacity>
+          </View>
         </View>
+
+        <ScreenScrollView style={{ maxHeight: 320 }} showsVerticalScrollIndicator={false}>
+          {mockStatement.transactions.map((t) => {
+            const isIncluded = includedTxns.has(t.id);
+            return (
+              <TouchableOpacity
+                key={t.id}
+                style={[
+                  styles.transactionItem,
+                  {
+                    backgroundColor: colors.card,
+                    borderColor: isIncluded ? (colors.cardBorder || colors.border) : 'transparent',
+                    opacity: isIncluded ? 1 : 0.6,
+                  },
+                ]}
+                onPress={() => toggleTransaction(t.id)}
+              >
+                <View style={[styles.transactionCheckbox, { backgroundColor: isIncluded ? colors.primary : 'transparent', borderColor: isIncluded ? colors.primary : colors.border }]}>
+                  {isIncluded && <Ionicons name="checkmark" size={13} color="#fff" />}
+                </View>
+                <View style={{ flex: 1, marginRight: spacing.sm }}>
+                  <Text style={[styles.transactionDesc, { color: colors.text }]} numberOfLines={1}>{t.description}</Text>
+                  <Text style={[styles.transactionCategory, { color: colors.textSecondary }]}>{t.category} • {formatDate(t.date)}</Text>
+                </View>
+                <Text style={[styles.transactionAmount, { color: t.type === 'income' ? (colors.positive || '#10B981') : (colors.negative || '#EF4444') }]}>
+                  {formatCurrency(t.amount, true)}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScreenScrollView>
 
         <View style={{ marginTop: spacing.lg }}>
           <Button title="Review Transactions" onPress={() => setStep('review')} style={{ width: '100%' }} />
@@ -376,51 +431,52 @@ export default function BankStatementScreen({ navigation }: { navigation: any })
     const netChange = totalIncome - totalExpense;
 
     return (
-      <View style={{ flex: 1 }}>
-        <View style={[styles.reviewHeader, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <Text style={[styles.reviewHeaderTitle, { color: colors.text }]}>Import Summary</Text>
+      <View style={{ flex: 1, paddingHorizontal: spacing.lg }}>
+        <View style={[styles.reviewHeader, { backgroundColor: colors.card, borderColor: colors.cardBorder || colors.border }]}>
+          <Badge variant="primary" label="READY TO IMPORT" size="sm" dot />
+          <Text style={[styles.reviewHeaderTitle, { color: colors.text, marginTop: spacing.xs }]}>Import Summary</Text>
           <Text style={[styles.reviewHeaderSubtitle, { color: colors.textSecondary }]}>
-            {mockStatement.month} {mockStatement.year} — {mockStatement.bankName}
+            {mockStatement.month} {mockStatement.year} • {mockStatement.bankName}
           </Text>
         </View>
 
-        <View style={[styles.reviewCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <View style={[styles.reviewCard, { backgroundColor: colors.card, borderColor: colors.cardBorder || colors.border }]}>
           <View style={styles.reviewRow}>
             <Text style={[styles.reviewLabel, { color: colors.textSecondary }]}>Source</Text>
             <Text style={[styles.reviewValue, { color: colors.text }]}>{mockStatement.bankName} Statement</Text>
           </View>
-          <View style={[styles.reviewRow, { borderBottomColor: colors.border }]}>
-            <Text style={[styles.reviewLabel, { color: colors.textSecondary }]}>Account</Text>
+          <View style={[styles.reviewRow, { borderBottomColor: colors.borderLight || colors.border }]}>
+            <Text style={[styles.reviewLabel, { color: colors.textSecondary }]}>Target Account</Text>
             <Text style={[styles.reviewValue, { color: colors.text }]}>{selectedAccount?.accountName || mockStatement.accountName}</Text>
           </View>
-          <View style={[styles.reviewRow, { borderBottomColor: colors.border }]}>
-            <Text style={[styles.reviewLabel, { color: colors.textSecondary }]}>Transactions to Import</Text>
+          <View style={[styles.reviewRow, { borderBottomColor: colors.borderLight || colors.border }]}>
+            <Text style={[styles.reviewLabel, { color: colors.textSecondary }]}>Transactions</Text>
             <Text style={[styles.reviewValue, { color: colors.primary }]}>{selectedCount}</Text>
           </View>
-          <View style={[styles.reviewRow, { borderBottomColor: colors.border }]}>
+          <View style={[styles.reviewRow, { borderBottomColor: colors.borderLight || colors.border }]}>
             <Text style={[styles.reviewLabel, { color: colors.textSecondary }]}>Total Income</Text>
             <Text style={[styles.reviewValue, { color: colors.positive || '#10B981' }]}>{formatCurrency(totalIncome)}</Text>
           </View>
-          <View style={[styles.reviewRow, { borderBottomColor: colors.border }]}>
+          <View style={[styles.reviewRow, { borderBottomColor: colors.borderLight || colors.border }]}>
             <Text style={[styles.reviewLabel, { color: colors.textSecondary }]}>Total Expenses</Text>
             <Text style={[styles.reviewValue, { color: colors.negative || '#EF4444' }]}>{formatCurrency(totalExpense)}</Text>
           </View>
           <View style={styles.reviewRow}>
             <Text style={[styles.reviewLabel, { color: colors.textSecondary }]}>Net Change</Text>
-            <Text style={[styles.reviewValue, { color: netChange >= 0 ? colors.positive || '#10B981' : colors.negative || '#EF4444' }]}>
+            <Text style={[styles.reviewValue, { color: netChange >= 0 ? (colors.positive || '#10B981') : (colors.negative || '#EF4444') }]}>
               {formatCurrency(netChange, true)}
             </Text>
           </View>
         </View>
 
-        <Text style={[styles.sectionTitle, { color: colors.text, marginTop: spacing.lg }]}>Transaction Details</Text>
-        <ScreenScrollView style={{ maxHeight: 300 }} showsVerticalScrollIndicator={false}>
+        <Text style={[styles.sectionTitle, { color: colors.text, marginTop: spacing.lg, fontSize: 16 }]}>Transaction Details</Text>
+        <ScreenScrollView style={{ maxHeight: 240 }} showsVerticalScrollIndicator={false}>
           {selectedTxns.map((t) => (
-            <View key={t.id} style={[styles.reviewTxnItem, { backgroundColor: colors.card, borderColor: colors.border }]}>
-              <Text style={[styles.reviewTxnDesc, { color: colors.text }]}>{t.description}</Text>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+            <View key={t.id} style={[styles.reviewTxnItem, { backgroundColor: colors.card, borderColor: colors.cardBorder || colors.border }]}>
+              <Text style={[styles.reviewTxnDesc, { color: colors.text }]} numberOfLines={1}>{t.description}</Text>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }}>
                 <Text style={[styles.reviewTxnDate, { color: colors.textTertiary }]}>{formatDate(t.date)}</Text>
-                <Text style={[styles.reviewTxnAmount, { color: t.type === 'income' ? colors.positive || '#10B981' : colors.negative || '#EF4444' }]}>
+                <Text style={[styles.reviewTxnAmount, { color: t.type === 'income' ? (colors.positive || '#10B981') : (colors.negative || '#EF4444') }]}>
                   {formatCurrency(t.amount, true)}
                 </Text>
               </View>
@@ -429,7 +485,7 @@ export default function BankStatementScreen({ navigation }: { navigation: any })
         </ScreenScrollView>
 
         <View style={{ marginTop: spacing.lg, gap: spacing.md }}>
-          <Button title="Confirm Import" onPress={handleConfirmImport} style={{ width: '100%' }} />
+          <Button title="Confirm & Import" onPress={handleConfirmImport} style={{ width: '100%' }} />
           <TouchableOpacity onPress={() => setStep('preview')}>
             <Text style={[styles.cancelText, { color: colors.textTertiary, textAlign: 'center' }]}>Back to Edit</Text>
           </TouchableOpacity>
@@ -443,16 +499,16 @@ export default function BankStatementScreen({ navigation }: { navigation: any })
 
     return (
       <View style={[styles.centeredView, { backgroundColor: colors.background }]}>
-        <View style={[styles.successCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <View style={[styles.successIcon, { backgroundColor: colors.success + '15' }]}>
-            <Ionicons name="checkmark-circle" size={72} color={colors.success} />
+        <View style={[styles.successCard, { backgroundColor: colors.card, borderColor: colors.cardBorder || colors.border }]}>
+          <View style={[styles.successIcon, { backgroundColor: (colors.success || '#10B981') + '18' }]}>
+            <Ionicons name="checkmark-circle" size={64} color={colors.success || '#10B981'} />
           </View>
           <Text style={[styles.successTitle, { color: colors.text }]}>Statement Imported!</Text>
           <Text style={[styles.successSubtitle, { color: colors.textSecondary }]}>
             {selectedCount} transactions from {mockStatement.month} {mockStatement.year} added to your account
           </Text>
 
-          <View style={[styles.successDetails, { backgroundColor: colors.inputBg }]}>
+          <View style={[styles.successDetails, { backgroundColor: colors.inputBg, borderColor: colors.cardBorder || colors.border }]}>
             <View style={styles.successDetailRow}>
               <Text style={[styles.successDetailLabel, { color: colors.textSecondary }]}>Total Imported</Text>
               <Text style={[styles.successDetailValue, { color: colors.primary }]}>{formatCurrency(selectedTxns.reduce((s, t) => s + Math.abs(t.amount), 0))}</Text>
@@ -463,9 +519,9 @@ export default function BankStatementScreen({ navigation }: { navigation: any })
             </View>
           </View>
 
-          <View style={{ flexDirection: 'row', gap: spacing.md, marginTop: spacing.md }}>
+          <View style={{ flexDirection: 'row', gap: spacing.md, marginTop: spacing.xl, width: '100%' }}>
             <Button title="View Transactions" onPress={() => navigation.navigate('AccountsScreen')} style={{ flex: 1 }} />
-            <Button title="Back to Accounts" variant="outline" onPress={() => navigation.goBack()} style={{ flex: 1 }} />
+            <Button title="Back" variant="outline" onPress={() => navigation.goBack()} style={{ flex: 1 }} />
           </View>
         </View>
       </View>
@@ -498,79 +554,239 @@ export default function BankStatementScreen({ navigation }: { navigation: any })
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: spacing.lg, paddingVertical: spacing.md, borderBottomWidth: 1 },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    borderBottomWidth: 1,
+  },
   backButton: { width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center' },
   headerTitle: { fontSize: 18, fontWeight: '700', flex: 1, textAlign: 'center' },
   headerSpacer: { width: 40 },
   scrollView: { flex: 1 },
-  scrollContent: { paddingBottom: 40 },
-  stepIndicator: { flexDirection: 'row', alignItems: 'center', marginHorizontal: spacing.lg, marginTop: spacing.lg, padding: spacing.md, borderRadius: borderRadius.lg, borderWidth: 1 },
+  scrollContent: { paddingBottom: 40, paddingTop: spacing.md },
+  stepIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: spacing.lg,
+    marginTop: spacing.md,
+    marginBottom: spacing.lg,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    borderRadius: 16,
+    borderWidth: 1,
+  },
   stepContainer: { flexDirection: 'row', alignItems: 'center', flex: 1 },
-  stepCircle: { width: 32, height: 32, borderRadius: 16, justifyContent: 'center', alignItems: 'center', borderWidth: 2 },
-  stepNumber: { fontSize: 14, fontWeight: '700' },
-  stepLabel: { fontSize: 11, marginLeft: 6, fontWeight: '500' },
-  stepLine: { height: 2, flex: 1, marginLeft: 4, marginRight: 4, borderRadius: 1 },
-  sectionTitle: { fontSize: 20, fontWeight: '700', marginBottom: spacing.sm },
-  sectionSubtitle: { fontSize: 14, marginBottom: spacing.lg },
-  sectionLabel: { fontSize: 14, fontWeight: '600', marginBottom: spacing.md },
-  uploadCard: { marginHorizontal: spacing.lg, padding: spacing.lg, borderRadius: borderRadius.lg, borderWidth: 1, marginTop: spacing.md },
-  uploadBox: { borderWidth: 2, borderStyle: 'dashed', borderRadius: borderRadius.xl, padding: spacing.xxl, alignItems: 'center' },
-  uploadTitle: { fontSize: 16, fontWeight: '600', marginTop: spacing.md },
-  uploadSubtitle: { fontSize: 13, marginTop: spacing.sm, textAlign: 'center' },
-  fileFormat: { fontSize: 12, marginTop: spacing.sm, color: '#94A3B8' },
-  browseButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: spacing.md, borderRadius: borderRadius.lg, borderWidth: 1, marginTop: spacing.lg },
-  browseButtonText: { fontSize: 14, fontWeight: '600', marginLeft: spacing.sm },
-  accountSection: { marginHorizontal: spacing.lg, padding: spacing.lg, borderRadius: borderRadius.lg, borderWidth: 1, marginTop: spacing.lg },
-  accountOption: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: spacing.md, borderRadius: borderRadius.md, borderWidth: 1, marginBottom: spacing.sm },
+  stepCircle: { width: 28, height: 28, borderRadius: 14, justifyContent: 'center', alignItems: 'center', borderWidth: 1.5 },
+  stepNumber: { fontSize: 12, fontWeight: '700' },
+  stepLabel: { fontSize: 11, marginLeft: 6, marginRight: 4 },
+  stepLine: { height: 2, flex: 1, marginRight: 6, borderRadius: 1 },
+  stepHeader: { marginBottom: spacing.md },
+  sectionTitle: { fontSize: 22, fontWeight: '800', letterSpacing: -0.3, marginBottom: spacing.xs },
+  sectionSubtitle: { fontSize: 13, lineHeight: 18 },
+  sectionLabel: { fontSize: 15, fontWeight: '700' },
+  sectionLabelSub: { fontSize: 12, marginTop: 2 },
+  accountSectionHeader: { marginBottom: spacing.md },
+  uploadCard: {
+    padding: spacing.lg,
+    borderRadius: 18,
+    borderWidth: 1,
+    marginBottom: spacing.lg,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  uploadBox: {
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
+    borderRadius: 16,
+    padding: spacing.xl,
+    alignItems: 'center',
+  },
+  uploadIconBubble: {
+    width: 60,
+    height: 60,
+    borderRadius: 18,
+    backgroundColor: 'rgba(99,102,241,0.12)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: spacing.sm,
+  },
+  uploadTitle: { fontSize: 16, fontWeight: '700', marginTop: spacing.xs },
+  uploadSubtitle: { fontSize: 13, marginTop: spacing.xs, textAlign: 'center' },
+  formatBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: spacing.md,
+    backgroundColor: 'rgba(148,163,184,0.12)',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 999,
+  },
+  fileFormat: { fontSize: 11, fontWeight: '500' },
+  browseButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: spacing.md,
+    borderRadius: 14,
+    borderWidth: 1,
+    marginTop: spacing.md,
+    gap: 8,
+  },
+  browseButtonText: { fontSize: 14, fontWeight: '700' },
+  accountSection: {
+    padding: spacing.lg,
+    borderRadius: 18,
+    borderWidth: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  accountOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: spacing.md,
+    borderRadius: 14,
+    borderWidth: 1,
+    marginBottom: spacing.sm,
+    gap: 12,
+  },
+  accountOptionIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   accountOptionInfo: { flex: 1 },
-  accountOptionName: { fontSize: 15, fontWeight: '600' },
-  accountOptionBank: { fontSize: 13, marginTop: 2 },
+  accountOptionName: { fontSize: 14, fontWeight: '700' },
+  accountOptionBank: { fontSize: 12, marginTop: 2 },
+  radioCircle: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 2,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   centeredView: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: spacing.lg },
-  processingCard: { padding: spacing.xxl, borderRadius: borderRadius.xl, borderWidth: 1, alignItems: 'center' },
-  processingTitle: { fontSize: 20, fontWeight: '700', marginTop: spacing.md },
-  processingSubtitle: { fontSize: 14, marginTop: spacing.sm, marginBottom: spacing.xl },
-  progressBar: { height: 8, borderRadius: 4, overflow: 'hidden', width: '100%', marginBottom: spacing.sm },
-  progressFill: { height: '100%', borderRadius: 4 },
-  progressText: { fontSize: 14, fontWeight: '600', textAlign: 'center', marginBottom: spacing.md },
-  miniProgressLabel: { fontSize: 12, fontWeight: '500' },
-  previewCard: { marginHorizontal: spacing.lg, padding: spacing.lg, borderRadius: borderRadius.lg, borderWidth: 1, marginTop: spacing.md },
-  previewHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: spacing.lg },
-  previewBankName: { fontSize: 16, fontWeight: '700' },
+  processingCard: {
+    width: '100%',
+    padding: spacing.xxl,
+    borderRadius: 20,
+    borderWidth: 1,
+    alignItems: 'center',
+  },
+  processingIconBubble: {
+    width: 72,
+    height: 72,
+    borderRadius: 22,
+    backgroundColor: 'rgba(99,102,241,0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: spacing.md,
+  },
+  processingTitle: { fontSize: 20, fontWeight: '800', marginTop: spacing.xs },
+  processingSubtitle: { fontSize: 14, marginTop: spacing.xs, marginBottom: spacing.xl },
+  progressBar: { height: 8, borderRadius: 999, overflow: 'hidden', width: '100%', marginBottom: spacing.xs },
+  progressFill: { height: '100%', borderRadius: 999 },
+  progressText: { fontSize: 14, fontWeight: '700', textAlign: 'center', marginBottom: spacing.md },
+  previewCard: {
+    padding: spacing.lg,
+    borderRadius: 18,
+    borderWidth: 1,
+    marginBottom: spacing.md,
+  },
+  previewHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: spacing.md },
+  previewBankName: { fontSize: 16, fontWeight: '800' },
   previewAccountName: { fontSize: 13, marginTop: 2 },
-  previewPeriod: { fontSize: 16, fontWeight: '600' },
-  previewAccountType: { fontSize: 12, marginTop: 2 },
-  balanceRow: { flexDirection: 'row', justifyContent: 'space-between', paddingBottom: spacing.md, borderBottomWidth: 1 },
+  previewPeriod: { fontSize: 14, fontWeight: '700' },
+  previewAccountType: { fontSize: 11 },
+  balanceRow: { flexDirection: 'row', justifyContent: 'space-between', paddingTop: spacing.sm, borderTopWidth: 1 },
   balanceLabel: { fontSize: 12, marginBottom: 4 },
-  balanceValue: { fontSize: 18, fontWeight: '700' },
-  summaryRow: { flexDirection: 'row', justifyContent: 'space-around', padding: spacing.lg, borderRadius: borderRadius.lg, borderWidth: 1, marginHorizontal: spacing.lg, marginTop: spacing.md },
-  summaryItem: { alignItems: 'center' },
-  summaryItemLabel: { fontSize: 12, marginBottom: 4 },
-  summaryItemValue: { fontSize: 18, fontWeight: '700' },
-  transactionItem: { flexDirection: 'row', alignItems: 'center', padding: spacing.md, borderRadius: borderRadius.md, borderWidth: 1, marginBottom: spacing.sm },
-  transactionCheckbox: { width: 24, height: 24, borderRadius: 6, justifyContent: 'center', alignItems: 'center', borderWidth: 2, marginRight: spacing.md },
-  transactionDesc: { fontSize: 15, fontWeight: '500', flex: 1 },
+  balanceValue: { fontSize: 17, fontWeight: '800' },
+  summaryRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: spacing.md,
+    borderRadius: 16,
+    borderWidth: 1,
+    marginBottom: spacing.sm,
+  },
+  summaryItem: { flex: 1, alignItems: 'center' },
+  summaryDivider: { width: 1, height: 28, backgroundColor: 'rgba(148,163,184,0.2)' },
+  summaryItemLabel: { fontSize: 11, fontWeight: '500', marginBottom: 2 },
+  summaryItemValue: { fontSize: 16, fontWeight: '800' },
+  pillBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 999,
+    borderWidth: 1,
+  },
+  pillBtnText: { fontSize: 12, fontWeight: '600' },
+  transactionItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: spacing.md,
+    borderRadius: 14,
+    borderWidth: 1,
+    marginBottom: spacing.xs,
+  },
+  transactionCheckbox: {
+    width: 22,
+    height: 22,
+    borderRadius: 6,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1.5,
+    marginRight: spacing.md,
+  },
+  transactionDesc: { fontSize: 14, fontWeight: '600' },
   transactionCategory: { fontSize: 12, marginTop: 2 },
   transactionAmount: { fontSize: 15, fontWeight: '700' },
-  actionButton: { padding: spacing.md, borderRadius: borderRadius.lg, borderWidth: 1, alignItems: 'center' },
-  actionButtonText: { fontSize: 14, fontWeight: '600' },
-  reviewHeader: { marginHorizontal: spacing.lg, padding: spacing.lg, borderRadius: borderRadius.lg, borderWidth: 1, marginTop: spacing.md },
-  reviewHeaderTitle: { fontSize: 18, fontWeight: '700' },
-  reviewHeaderSubtitle: { fontSize: 13, marginTop: spacing.sm },
-  reviewCard: { marginHorizontal: spacing.lg, padding: spacing.lg, borderRadius: borderRadius.lg, borderWidth: 1, marginTop: spacing.md },
-  reviewRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: spacing.sm },
-  reviewLabel: { fontSize: 14, fontWeight: '500' },
-  reviewValue: { fontSize: 14, fontWeight: '600' },
-  reviewTxnItem: { padding: spacing.md, borderRadius: borderRadius.md, borderWidth: 1, marginBottom: spacing.sm },
-  reviewTxnDesc: { fontSize: 15, fontWeight: '500' },
-  reviewTxnDate: { fontSize: 12, marginTop: 2 },
-  reviewTxnAmount: { fontSize: 15, fontWeight: '700' },
-  successCard: { padding: spacing.xxl, borderRadius: borderRadius.xl, borderWidth: 1, alignItems: 'center' },
-  successIcon: { marginBottom: spacing.md },
-  successTitle: { fontSize: 24, fontWeight: '800', marginTop: spacing.md },
-  successSubtitle: { fontSize: 14, marginTop: spacing.sm, textAlign: 'center', marginBottom: spacing.lg },
-  successDetails: { padding: spacing.lg, borderRadius: borderRadius.lg, width: '100%' },
-  successDetailRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: spacing.sm },
-  successDetailLabel: { fontSize: 14 },
-  successDetailValue: { fontSize: 16, fontWeight: '700' },
-  cancelText: { fontSize: 14, marginTop: spacing.md },
+  reviewHeader: {
+    padding: spacing.lg,
+    borderRadius: 18,
+    borderWidth: 1,
+    marginBottom: spacing.md,
+  },
+  reviewHeaderTitle: { fontSize: 20, fontWeight: '800' },
+  reviewHeaderSubtitle: { fontSize: 13, marginTop: 2 },
+  reviewCard: {
+    padding: spacing.lg,
+    borderRadius: 18,
+    borderWidth: 1,
+    marginBottom: spacing.md,
+  },
+  reviewRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 10 },
+  reviewLabel: { fontSize: 13, fontWeight: '500' },
+  reviewValue: { fontSize: 14, fontWeight: '700' },
+  reviewTxnItem: { padding: spacing.md, borderRadius: 14, borderWidth: 1, marginBottom: spacing.xs },
+  reviewTxnDesc: { fontSize: 14, fontWeight: '600' },
+  reviewTxnDate: { fontSize: 12 },
+  reviewTxnAmount: { fontSize: 14, fontWeight: '700' },
+  successCard: { width: '100%', padding: spacing.xxl, borderRadius: 22, borderWidth: 1, alignItems: 'center' },
+  successIcon: {
+    width: 80,
+    height: 80,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: spacing.md,
+  },
+  successTitle: { fontSize: 22, fontWeight: '800', marginTop: spacing.xs },
+  successSubtitle: { fontSize: 13, marginTop: spacing.xs, textAlign: 'center', marginBottom: spacing.lg },
+  successDetails: { padding: spacing.lg, borderRadius: 16, width: '100%', borderWidth: 1 },
+  successDetailRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 8 },
+  successDetailLabel: { fontSize: 13, fontWeight: '500' },
+  successDetailValue: { fontSize: 15, fontWeight: '700' },
+  cancelText: { fontSize: 14, fontWeight: '500', marginTop: spacing.sm },
 });

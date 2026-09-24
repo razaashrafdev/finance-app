@@ -1,23 +1,22 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   View,
   Text,
+  TextInput,
   StyleSheet,
   TouchableOpacity,
   StatusBar,
   Switch,
-  Alert,
+  ScrollView,
+  Platform,
   KeyboardAvoidingView,
-  Platform
 } from 'react-native';
-import { ScreenScrollView } from '../../components/common/ScreenScroll';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../theme/ThemeContext';
 import { useAppStore } from '../../store/AppStore';
 import { toIonicon } from '../../utils/icons';
 import { useToast } from '../../components/common/Toast';
 import { formatCurrency } from '../../utils/format';
-import Input from '../../components/common/Input';
 import Button from '../../components/common/Button';
 import BottomSheet from '../../components/common/BottomSheet';
 
@@ -26,13 +25,16 @@ interface AddIncomeScreenProps {
 }
 
 const INCOME_SOURCES = ['Salary', 'Freelance', 'Investments', 'Business', 'Gifts', 'Other'] as const;
-
 const FREQUENCIES = ['Weekly', 'Bi-Weekly', 'Monthly', 'Quarterly', 'Yearly'] as const;
 
 const AddIncomeScreen: React.FC<AddIncomeScreenProps> = ({ navigation }) => {
   const { colors } = useTheme();
   const { accounts, addTransaction } = useAppStore();
   const toast = useToast();
+
+  const amountRef = useRef<TextInput>(null);
+  const dateRef = useRef<TextInput>(null);
+  const notesRef = useRef<TextInput>(null);
 
   const [amount, setAmount] = useState('');
   const [source, setSource] = useState('');
@@ -41,8 +43,6 @@ const AddIncomeScreen: React.FC<AddIncomeScreenProps> = ({ navigation }) => {
   const [notes, setNotes] = useState('');
   const [isRecurring, setIsRecurring] = useState(false);
   const [frequency, setFrequency] = useState('');
-
-  const [errors, setErrors] = useState<Record<string, string>>({});
   const [sourceSheetVisible, setSourceSheetVisible] = useState(false);
   const [accountSheetVisible, setAccountSheetVisible] = useState(false);
   const [frequencySheetVisible, setFrequencySheetVisible] = useState(false);
@@ -65,6 +65,153 @@ const AddIncomeScreen: React.FC<AddIncomeScreenProps> = ({ navigation }) => {
     navigation.goBack();
   };
 
+  const fieldShell = (focusedBorder?: boolean) => [
+    styles.fieldBox,
+    {
+      backgroundColor: colors.card,
+      borderColor: colors.border,
+    },
+  ];
+
+  const form = (
+    <ScrollView
+      style={styles.scrollView}
+      contentContainerStyle={styles.scrollContent}
+      keyboardShouldPersistTaps="always"
+      keyboardDismissMode="none"
+      showsVerticalScrollIndicator={false}
+      nestedScrollEnabled
+    >
+      <View style={styles.amountSection}>
+        <Text style={[styles.amountLabel, { color: colors.textSecondary }]}>Enter Amount</Text>
+        <View style={styles.amountRow}>
+          <Text style={[styles.currencySymbol, { color: colors.text }]}>$</Text>
+          <TextInput
+            ref={amountRef}
+            value={amount}
+            onChangeText={setAmount}
+            placeholder="0.00"
+            placeholderTextColor={colors.textTertiary}
+            keyboardType="decimal-pad"
+            returnKeyType="done"
+            style={[styles.amountInput, { color: colors.text }]}
+          />
+        </View>
+      </View>
+
+      <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Income Source</Text>
+      <TouchableOpacity
+        style={fieldShell()}
+        onPress={() => {
+          amountRef.current?.blur();
+          dateRef.current?.blur();
+          notesRef.current?.blur();
+          setSourceSheetVisible(true);
+        }}
+        activeOpacity={0.7}
+      >
+        <Text style={[styles.selectorText, { color: source ? colors.text : colors.textTertiary }]}>
+          {source || 'Select source'}
+        </Text>
+        <Ionicons name="chevron-down" size={18} color={colors.textTertiary} />
+      </TouchableOpacity>
+
+      <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Deposit To</Text>
+      <TouchableOpacity
+        style={fieldShell()}
+        onPress={() => {
+          amountRef.current?.blur();
+          dateRef.current?.blur();
+          notesRef.current?.blur();
+          setAccountSheetVisible(true);
+        }}
+        activeOpacity={0.7}
+      >
+        <Text style={[styles.selectorText, { color: accountId ? colors.text : colors.textTertiary }]}>
+          {selectedAccount ? selectedAccount.name : 'Select account'}
+        </Text>
+        <Ionicons name="chevron-down" size={18} color={colors.textTertiary} />
+      </TouchableOpacity>
+
+      <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Date</Text>
+      <View style={fieldShell()}>
+        <Ionicons name="calendar-outline" size={20} color={colors.textTertiary} style={styles.leadingIcon} />
+        <TextInput
+          ref={dateRef}
+          value={date}
+          onChangeText={setDate}
+          placeholder="YYYY-MM-DD"
+          placeholderTextColor={colors.textTertiary}
+          autoCorrect={false}
+          autoCapitalize="none"
+          returnKeyType="next"
+          onSubmitEditing={() => notesRef.current?.focus()}
+          style={[styles.textInput, { color: colors.text }]}
+        />
+      </View>
+
+      <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Notes (Optional)</Text>
+      <View style={[fieldShell(), styles.notesBox]}>
+        <Ionicons name="document-text-outline" size={20} color={colors.textTertiary} style={styles.leadingIcon} />
+        <TextInput
+          ref={notesRef}
+          value={notes}
+          onChangeText={setNotes}
+          placeholder="Add a note..."
+          placeholderTextColor={colors.textTertiary}
+          multiline
+          textAlignVertical="top"
+          blurOnSubmit={false}
+          style={[styles.textInput, styles.notesInput, { color: colors.text }]}
+        />
+      </View>
+
+      <View style={[styles.recurringSection, { borderTopColor: colors.border }]}>
+        <View style={styles.recurringRow}>
+          <View style={styles.recurringLeft}>
+            <View style={[styles.recurringIcon, { backgroundColor: colors.primary + '15' }]}>
+              <Ionicons name="repeat" size={20} color={colors.primary} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.recurringTitle, { color: colors.text }]}>Recurring</Text>
+              <Text style={[styles.recurringSubtitle, { color: colors.textSecondary }]}>
+                Automatically repeat this income
+              </Text>
+            </View>
+          </View>
+          <Switch
+            value={isRecurring}
+            onValueChange={setIsRecurring}
+            trackColor={{ false: colors.border, true: colors.primary + '50' }}
+            thumbColor={isRecurring ? colors.primary : '#f4f3f4'}
+          />
+        </View>
+
+        {isRecurring ? (
+          <>
+            <Text style={[styles.fieldLabel, { color: colors.textSecondary, marginTop: 16 }]}>
+              Frequency
+            </Text>
+            <TouchableOpacity
+              style={fieldShell()}
+              onPress={() => setFrequencySheetVisible(true)}
+              activeOpacity={0.7}
+            >
+              <Text
+                style={[styles.selectorText, { color: frequency ? colors.text : colors.textTertiary }]}
+              >
+                {frequency || 'Select frequency'}
+              </Text>
+              <Ionicons name="chevron-down" size={18} color={colors.textTertiary} />
+            </TouchableOpacity>
+          </>
+        ) : null}
+      </View>
+
+      <View style={{ height: 120 }} />
+    </ScrollView>
+  );
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
@@ -86,200 +233,19 @@ const AddIncomeScreen: React.FC<AddIncomeScreenProps> = ({ navigation }) => {
         </TouchableOpacity>
       </View>
 
-      <KeyboardAvoidingView
-        style={styles.flex}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
-        <ScreenScrollView
-          style={styles.scrollView}
-          contentContainerStyle={[styles.scrollContent, { paddingBottom: 156 }]}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-        >
-          {/* Amount Input */}
-          <View style={styles.amountSection}>
-            <Text style={[styles.amountLabel, { color: colors.textSecondary }]}>
-              Enter Amount
-            </Text>
-            <View style={styles.amountInputContainer}>
-              <Text style={[styles.currencySymbol, { color: colors.text }]}>$</Text>
-              <Input
-                value={amount}
-                onChangeText={setAmount}
-                placeholder="0.00"
-                keyboardType="decimal-pad"
-                error={errors.amount}
-                style={styles.amountInput}
-              />
-            </View>
-          </View>
+      {Platform.OS === 'ios' ? (
+        <KeyboardAvoidingView style={styles.flex} behavior="padding">
+          {form}
+        </KeyboardAvoidingView>
+      ) : (
+        <View style={styles.flex}>{form}</View>
+      )}
 
-          {/* Source Selector */}
-          <View style={styles.fieldSection}>
-            <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>
-              Income Source
-            </Text>
-            <TouchableOpacity
-              style={[
-                styles.selector,
-                {
-                  backgroundColor: colors.inputBg || colors.background,
-                  borderColor: errors.source ? '#EF4444' : colors.border,
-                },
-              ]}
-              onPress={() => setSourceSheetVisible(true)}
-              activeOpacity={0.7}
-            >
-              <Text
-                style={[
-                  styles.selectorText,
-                  { color: source ? colors.text : colors.textTertiary },
-                ]}
-              >
-                {source || 'Select source'}
-              </Text>
-              <Ionicons name="chevron-down" size={18} color={colors.textTertiary} />
-            </TouchableOpacity>
-            {errors.source && (
-              <Text style={styles.errorText}>{errors.source}</Text>
-            )}
-          </View>
-
-          {/* Account Selector */}
-          <View style={styles.fieldSection}>
-            <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>
-              Deposit To
-            </Text>
-            <TouchableOpacity
-              style={[
-                styles.selector,
-                {
-                  backgroundColor: colors.inputBg || colors.background,
-                  borderColor: errors.account ? '#EF4444' : colors.border,
-                },
-              ]}
-              onPress={() => setAccountSheetVisible(true)}
-              activeOpacity={0.7}
-            >
-              <Text
-                style={[
-                  styles.selectorText,
-                  { color: accountId ? colors.text : colors.textTertiary },
-                ]}
-              >
-                {selectedAccount ? selectedAccount.name : 'Select account'}
-              </Text>
-              <Ionicons name="chevron-down" size={18} color={colors.textTertiary} />
-            </TouchableOpacity>
-            {errors.account && (
-              <Text style={styles.errorText}>{errors.account}</Text>
-            )}
-          </View>
-
-          {/* Date Input */}
-          <View style={styles.fieldSection}>
-            <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>
-              Date
-            </Text>
-            <Input
-              value={date}
-              onChangeText={setDate}
-              placeholder="YYYY-MM-DD"
-              error={errors.date}
-              icon={<Ionicons name="calendar-outline" size={20} color={colors.textTertiary} />}
-            />
-          </View>
-
-          {/* Notes */}
-          <View style={styles.fieldSection}>
-            <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>
-              Notes (Optional)
-            </Text>
-            <Input
-              value={notes}
-              onChangeText={setNotes}
-              placeholder="Add a note..."
-              multiline
-              icon={<Ionicons name="document-text-outline" size={20} color={colors.textTertiary} />}
-            />
-          </View>
-
-          {/* Recurring Toggle */}
-          <View style={[styles.recurringSection, { borderTopColor: colors.border }]}>
-            <View style={styles.recurringRow}>
-              <View style={styles.recurringLeft}>
-                <View style={[styles.recurringIcon, { backgroundColor: colors.primary + '15' }]}>
-                  <Ionicons name="repeat" size={20} color={colors.primary} />
-                </View>
-                <View>
-                  <Text style={[styles.recurringTitle, { color: colors.text }]}>Recurring</Text>
-                  <Text style={[styles.recurringSubtitle, { color: colors.textSecondary }]}>
-                    Automatically repeat this income
-                  </Text>
-                </View>
-              </View>
-              <Switch
-                value={isRecurring}
-                onValueChange={setIsRecurring}
-                trackColor={{ false: colors.border, true: colors.primary + '50' }}
-                thumbColor={isRecurring ? colors.primary : '#f4f3f4'}
-              />
-            </View>
-
-            {isRecurring && (
-              <View style={styles.frequencySection}>
-                <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>
-                  Frequency
-                </Text>
-                <TouchableOpacity
-                  style={[
-                    styles.selector,
-                    {
-                      backgroundColor: colors.inputBg || colors.background,
-                      borderColor: errors.frequency ? '#EF4444' : colors.border,
-                    },
-                  ]}
-                  onPress={() => setFrequencySheetVisible(true)}
-                  activeOpacity={0.7}
-                >
-                  <Text
-                    style={[
-                      styles.selectorText,
-                      { color: frequency ? colors.text : colors.textTertiary },
-                    ]}
-                  >
-                    {frequency || 'Select frequency'}
-                  </Text>
-                  <Ionicons name="chevron-down" size={18} color={colors.textTertiary} />
-                </TouchableOpacity>
-                {errors.frequency && (
-                  <Text style={styles.errorText}>{errors.frequency}</Text>
-                )}
-              </View>
-            )}
-          </View>
-
-          <View style={{ height: 100 }} />
-        </ScreenScrollView>
-      </KeyboardAvoidingView>
-
-      {/* Save Button */}
       <View style={[styles.saveContainer, { backgroundColor: colors.background, borderTopColor: colors.border }]}>
-        <Button
-          title="Save Income"
-          onPress={handleSave}
-          variant="primary"
-          size="lg"
-          style={styles.saveButton}
-        />
+        <Button title="Save Income" onPress={handleSave} variant="primary" size="lg" style={styles.saveButton} />
       </View>
 
-      {/* Source Bottom Sheet */}
-      <BottomSheet
-        visible={sourceSheetVisible}
-        onClose={() => setSourceSheetVisible(false)}
-        title="Select Source"
-      >
+      <BottomSheet visible={sourceSheetVisible} onClose={() => setSourceSheetVisible(false)} title="Select Source">
         {INCOME_SOURCES.map((s) => (
           <TouchableOpacity
             key={s}
@@ -295,27 +261,15 @@ const AddIncomeScreen: React.FC<AddIncomeScreenProps> = ({ navigation }) => {
               setSourceSheetVisible(false);
             }}
           >
-            <Text
-              style={[
-                styles.sheetOptionText,
-                { color: source === s ? colors.primary : colors.text },
-              ]}
-            >
+            <Text style={[styles.sheetOptionText, { color: source === s ? colors.primary : colors.text }]}>
               {s}
             </Text>
-            {source === s && (
-              <Ionicons name="checkmark-circle" size={20} color={colors.primary} />
-            )}
+            {source === s ? <Ionicons name="checkmark-circle" size={20} color={colors.primary} /> : null}
           </TouchableOpacity>
         ))}
       </BottomSheet>
 
-      {/* Account Bottom Sheet */}
-      <BottomSheet
-        visible={accountSheetVisible}
-        onClose={() => setAccountSheetVisible(false)}
-        title="Select Account"
-      >
+      <BottomSheet visible={accountSheetVisible} onClose={() => setAccountSheetVisible(false)} title="Select Account">
         {accounts.map((a: any) => (
           <TouchableOpacity
             key={a.id}
@@ -337,10 +291,7 @@ const AddIncomeScreen: React.FC<AddIncomeScreenProps> = ({ navigation }) => {
               </View>
               <View>
                 <Text
-                  style={[
-                    styles.sheetOptionText,
-                    { color: accountId === a.id ? colors.primary : colors.text },
-                  ]}
+                  style={[styles.sheetOptionText, { color: accountId === a.id ? colors.primary : colors.text }]}
                 >
                   {a.name}
                 </Text>
@@ -349,14 +300,11 @@ const AddIncomeScreen: React.FC<AddIncomeScreenProps> = ({ navigation }) => {
                 </Text>
               </View>
             </View>
-            {accountId === a.id && (
-              <Ionicons name="checkmark-circle" size={20} color={colors.primary} />
-            )}
+            {accountId === a.id ? <Ionicons name="checkmark-circle" size={20} color={colors.primary} /> : null}
           </TouchableOpacity>
         ))}
       </BottomSheet>
 
-      {/* Frequency Bottom Sheet */}
       <BottomSheet
         visible={frequencySheetVisible}
         onClose={() => setFrequencySheetVisible(false)}
@@ -377,17 +325,10 @@ const AddIncomeScreen: React.FC<AddIncomeScreenProps> = ({ navigation }) => {
               setFrequencySheetVisible(false);
             }}
           >
-            <Text
-              style={[
-                styles.sheetOptionText,
-                { color: frequency === f ? colors.primary : colors.text },
-              ]}
-            >
+            <Text style={[styles.sheetOptionText, { color: frequency === f ? colors.primary : colors.text }]}>
               {f}
             </Text>
-            {frequency === f && (
-              <Ionicons name="checkmark-circle" size={20} color={colors.primary} />
-            )}
+            {frequency === f ? <Ionicons name="checkmark-circle" size={20} color={colors.primary} /> : null}
           </TouchableOpacity>
         ))}
       </BottomSheet>
@@ -396,12 +337,8 @@ const AddIncomeScreen: React.FC<AddIncomeScreenProps> = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  flex: {
-    flex: 1,
-  },
+  container: { flex: 1 },
+  flex: { flex: 1 },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -422,9 +359,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     textAlign: 'center',
   },
-  headerSpacer: {
-    width: 40,
-  },
   headerSaveButton: {
     minWidth: 64,
     height: 36,
@@ -433,44 +367,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  headerSaveText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingBottom: 20,
-  },
-  amountSection: {
-    paddingHorizontal: 20,
-    paddingTop: 32,
-    paddingBottom: 24,
-    alignItems: 'center',
-  },
-  amountLabel: {
-    fontSize: 14,
-    fontWeight: '500',
-    marginBottom: 12,
-  },
-  amountInputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  currencySymbol: {
-    fontSize: 36,
-    fontWeight: '300',
-    marginRight: 4,
-  },
-  amountInput: {
-    flex: 1,
-  },
-  fieldSection: {
-    paddingHorizontal: 20,
-    marginBottom: 16,
-  },
+  headerSaveText: { color: '#fff', fontSize: 14, fontWeight: '700' },
+  scrollView: { flex: 1 },
+  scrollContent: { paddingHorizontal: 20, paddingTop: 24, paddingBottom: 40 },
+  amountSection: { alignItems: 'center', marginBottom: 28 },
+  amountLabel: { fontSize: 14, fontWeight: '500', marginBottom: 12 },
+  amountRow: { flexDirection: 'row', alignItems: 'center', width: '100%' },
+  currencySymbol: { fontSize: 36, fontWeight: '300', marginRight: 8 },
+  amountInput: { flex: 1, fontSize: 36, fontWeight: '600', paddingVertical: 8 },
   fieldLabel: {
     fontSize: 13,
     fontWeight: '600',
@@ -478,41 +382,23 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
-  selector: {
+  fieldBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    borderRadius: 12,
     borderWidth: 1.5,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    minHeight: 52,
+    marginBottom: 16,
   },
-  selectorText: {
-    fontSize: 16,
-  },
-  errorText: {
-    fontSize: 12,
-    color: '#EF4444',
-    marginTop: 6,
-    fontWeight: '500',
-  },
-  recurringSection: {
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    marginTop: 8,
-    borderTopWidth: 1,
-  },
-  recurringRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  recurringLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    flex: 1,
-  },
+  notesBox: { alignItems: 'flex-start', minHeight: 110, paddingVertical: 12 },
+  leadingIcon: { marginRight: 10, marginTop: 2 },
+  textInput: { flex: 1, fontSize: 16, paddingVertical: 10 },
+  notesInput: { minHeight: 80, paddingTop: 0 },
+  selectorText: { flex: 1, fontSize: 16 },
+  recurringSection: { marginTop: 8, paddingTop: 20, borderTopWidth: 1 },
+  recurringRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  recurringLeft: { flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1, marginRight: 12 },
   recurringIcon: {
     width: 40,
     height: 40,
@@ -520,25 +406,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  recurringTitle: {
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  recurringSubtitle: {
-    fontSize: 12,
-    marginTop: 2,
-  },
-  frequencySection: {
-    marginTop: 16,
-  },
-  saveContainer: {
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    borderTopWidth: 1,
-  },
-  saveButton: {
-    width: '100%',
-  },
+  recurringTitle: { fontSize: 15, fontWeight: '600' },
+  recurringSubtitle: { fontSize: 12, marginTop: 2 },
+  saveContainer: { paddingHorizontal: 20, paddingVertical: 16, borderTopWidth: 1 },
+  saveButton: { width: '100%' },
   sheetOption: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -549,15 +420,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     marginBottom: 8,
   },
-  sheetOptionText: {
-    fontSize: 16,
-    fontWeight: '500',
-  },
-  sheetOptionLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
+  sheetOptionText: { fontSize: 16, fontWeight: '500' },
+  sheetOptionLeft: { flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 },
   sheetAccountIcon: {
     width: 36,
     height: 36,
@@ -565,10 +429,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  sheetOptionSub: {
-    fontSize: 13,
-    marginTop: 2,
-  },
+  sheetOptionSub: { fontSize: 13, marginTop: 2 },
 });
 
 export default AddIncomeScreen;

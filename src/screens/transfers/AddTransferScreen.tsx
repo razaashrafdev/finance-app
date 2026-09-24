@@ -382,6 +382,8 @@ const AddTransferScreen: React.FC<AddTransferProps> = ({ navigation }) => {
       <ScreenScrollView
         contentContainerStyle={[styles.scrollContent, { paddingBottom: 156 }]}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        resetOnFocus={false}
       >
         <View style={styles.amountContainer}>
           <Text style={[styles.amountLabel, { color: colors.textSecondary }]}>

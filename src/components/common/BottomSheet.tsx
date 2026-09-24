@@ -28,7 +28,7 @@ const BottomSheet: React.FC<BottomSheetProps> = ({
   title,
   children,
 }) => {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const translateY = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
   const overlayOpacity = useRef(new Animated.Value(0)).current;
 
@@ -43,7 +43,7 @@ const BottomSheet: React.FC<BottomSheetProps> = ({
         }),
         Animated.timing(overlayOpacity, {
           toValue: 1,
-          duration: 300,
+          duration: 250,
           useNativeDriver: true,
         }),
       ]).start();
@@ -51,12 +51,12 @@ const BottomSheet: React.FC<BottomSheetProps> = ({
       Animated.parallel([
         Animated.timing(translateY, {
           toValue: SCREEN_HEIGHT,
-          duration: 300,
+          duration: 250,
           useNativeDriver: true,
         }),
         Animated.timing(overlayOpacity, {
           toValue: 0,
-          duration: 300,
+          duration: 250,
           useNativeDriver: true,
         }),
       ]).start();
@@ -67,12 +67,12 @@ const BottomSheet: React.FC<BottomSheetProps> = ({
     Animated.parallel([
       Animated.timing(translateY, {
         toValue: SCREEN_HEIGHT,
-        duration: 300,
+        duration: 250,
         useNativeDriver: true,
       }),
       Animated.timing(overlayOpacity, {
         toValue: 0,
-        duration: 300,
+        duration: 250,
         useNativeDriver: true,
       }),
     ]).start(() => {
@@ -106,26 +106,41 @@ const BottomSheet: React.FC<BottomSheetProps> = ({
           style={[
             styles.sheet,
             {
-              backgroundColor: colors.card || colors.background || '#FFFFFF',
+              backgroundColor: colors.surface,
+              borderColor: colors.border,
+              borderTopWidth: 1,
+              borderLeftWidth: 1,
+              borderRightWidth: 1,
               transform: [{ translateY }],
             },
           ]}
         >
           <View style={styles.handleBarContainer}>
-            <View style={[styles.handleBar, { backgroundColor: colors.border || '#E5E5E5' }]} />
+            <View
+              style={[
+                styles.handleBar,
+                { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(15, 23, 42, 0.15)' },
+              ]}
+            />
           </View>
 
           <View style={styles.header}>
             {title && (
-              <Text style={[styles.title, { color: colors.text || '#1A1A1A' }]}>
+              <Text style={[styles.title, { color: colors.text }]}>
                 {title}
               </Text>
             )}
-            <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
+            <TouchableOpacity
+              onPress={handleClose}
+              style={[
+                styles.closeButton,
+                { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(15, 23, 42, 0.06)' },
+              ]}
+            >
               <Ionicons
                 name="close"
-                size={24}
-                color={colors.textSecondary || '#6B7280'}
+                size={18}
+                color={colors.textSecondary}
               />
             </TouchableOpacity>
           </View>
@@ -150,15 +165,20 @@ const styles = StyleSheet.create({
   },
   overlayBackground: {
     ...StyleSheet.absoluteFill,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.65)',
   },
   overlayTouchable: {
     flex: 1,
   },
   sheet: {
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    maxHeight: SCREEN_HEIGHT * 0.85,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    maxHeight: SCREEN_HEIGHT * 0.88,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 20,
+    elevation: 20,
   },
   handleBarContainer: {
     alignItems: 'center',
@@ -166,7 +186,7 @@ const styles = StyleSheet.create({
     paddingBottom: 8,
   },
   handleBar: {
-    width: 40,
+    width: 36,
     height: 4,
     borderRadius: 2,
   },
@@ -180,18 +200,23 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: '700',
+    letterSpacing: -0.3,
     flex: 1,
   },
   closeButton: {
-    padding: 4,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
     marginLeft: 12,
   },
   content: {
-    maxHeight: SCREEN_HEIGHT * 0.85 - 120,
+    maxHeight: SCREEN_HEIGHT * 0.88 - 120,
   },
   contentContainer: {
     paddingHorizontal: 20,
-    paddingBottom: 32,
+    paddingBottom: 36,
   },
 });
 

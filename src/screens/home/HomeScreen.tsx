@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { ScreenScrollView } from '../../components/common/ScreenScroll';
 import { Svg, Rect, Text as SvgText, G, Line } from 'react-native-svg';
+import { LinearGradient } from 'expo-linear-gradient';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useTheme } from '../../theme/ThemeContext';
 import Avatar from '../../components/common/Avatar';
@@ -176,70 +177,84 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     },
     notificationButton: {
       position: 'relative',
-      width: 44,
-      height: 44,
-      borderRadius: 22,
-      backgroundColor: theme.colors.surface || '#F3F4F6',
+      width: 42,
+      height: 42,
+      borderRadius: 14,
+      backgroundColor: theme.colors.surface,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
       justifyContent: 'center',
       alignItems: 'center',
     },
     notificationBadge: {
       position: 'absolute',
-      top: 8,
-      right: 8,
-      width: 10,
-      height: 10,
-      borderRadius: 5,
+      top: 6,
+      right: 6,
+      width: 8,
+      height: 8,
+      borderRadius: 4,
       backgroundColor: '#EF4444',
-      borderWidth: 2,
+      borderWidth: 1.5,
       borderColor: theme.colors.background,
     },
     balanceCard: {
       marginHorizontal: spacing.lg,
       marginTop: spacing.md,
       padding: spacing.xl,
-      borderRadius: borderRadius.xl || 20,
-      backgroundColor: theme.colors.primary || '#6366F1',
+      borderRadius: 22,
+      overflow: 'hidden',
+      borderWidth: 1,
+      borderColor: 'rgba(255, 255, 255, 0.18)',
       shadowColor: '#6366F1',
       shadowOffset: { width: 0, height: 8 },
-      shadowOpacity: 0.3,
-      shadowRadius: 16,
+      shadowOpacity: 0.35,
+      shadowRadius: 18,
       elevation: 8,
     },
     balanceLabel: {
-      fontSize: 14,
-      color: 'rgba(255,255,255,0.7)',
-      marginBottom: 4,
+      fontSize: 13,
+      fontWeight: '500',
+      color: 'rgba(255,255,255,0.75)',
+      marginBottom: 6,
+      letterSpacing: 0.2,
     },
     balanceAmount: {
       fontSize: 36,
       fontWeight: '800',
       color: '#FFFFFF',
+      letterSpacing: -0.6,
       marginBottom: spacing.lg,
     },
     balanceRow: {
       flexDirection: 'row',
-      justifyContent: 'space-between',
+      gap: 10,
     },
     balanceStat: {
       flex: 1,
+      paddingVertical: 10,
+      paddingHorizontal: 12,
+      borderRadius: 12,
+      backgroundColor: 'rgba(0, 0, 0, 0.18)',
+      borderWidth: 1,
+      borderColor: 'rgba(255, 255, 255, 0.12)',
     },
     balanceStatLabel: {
-      fontSize: 12,
-      color: 'rgba(255,255,255,0.7)',
-      marginBottom: 4,
+      fontSize: 11,
+      fontWeight: '500',
+      color: 'rgba(255,255,255,0.85)',
+      marginBottom: 3,
       flexDirection: 'row',
       alignItems: 'center',
     },
     balanceStatValue: {
-      fontSize: 18,
+      fontSize: 16,
       fontWeight: '700',
       color: '#FFFFFF',
+      letterSpacing: -0.2,
     },
     balanceDivider: {
-      width: 1,
-      backgroundColor: 'rgba(255,255,255,0.2)',
-      marginHorizontal: spacing.md,
+      width: 0,
+      display: 'none',
     },
     section: {
       marginTop: spacing.xl,
@@ -272,26 +287,29 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
       width: 72,
     },
     quickActionCircle: {
-      width: 56,
-      height: 56,
-      borderRadius: 28,
+      width: 54,
+      height: 54,
+      borderRadius: 16,
+      borderWidth: 1,
       justifyContent: 'center',
       alignItems: 'center',
       marginBottom: 6,
     },
     quickActionLabel: {
-      fontSize: 11,
+      fontSize: 12,
       color: theme.colors.text,
-      fontWeight: '500',
+      fontWeight: '600',
     },
     chartContainer: {
-      backgroundColor: theme.colors.card || '#FFFFFF',
-      borderRadius: borderRadius.lg || 16,
+      backgroundColor: theme.colors.card,
+      borderRadius: 18,
+      borderWidth: 1,
+      borderColor: theme.colors.cardBorder,
       padding: spacing.lg,
       shadowColor: '#000',
       shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.05,
-      shadowRadius: 8,
+      shadowOpacity: theme.dark ? 0.35 : 0.04,
+      shadowRadius: 10,
       elevation: 2,
     },
     chartLegend: {
@@ -312,7 +330,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     },
     legendText: {
       fontSize: 12,
-      color: theme.colors.textSecondary || '#6B7280',
+      color: theme.colors.textSecondary,
     },
     spendingScroll: {
       marginLeft: -spacing.lg,
@@ -320,27 +338,30 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     },
     spendingCard: {
       width: 140,
-      backgroundColor: theme.colors.card || '#FFFFFF',
-      borderRadius: borderRadius.lg || 16,
+      backgroundColor: theme.colors.card,
+      borderRadius: 16,
+      borderWidth: 1,
+      borderColor: theme.colors.cardBorder,
       padding: spacing.md,
       marginRight: spacing.md,
       shadowColor: '#000',
       shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.05,
+      shadowOpacity: theme.dark ? 0.35 : 0.04,
       shadowRadius: 8,
       elevation: 2,
     },
     spendingIconContainer: {
       width: 36,
       height: 36,
-      borderRadius: 18,
+      borderRadius: 12,
+      borderWidth: 1,
       justifyContent: 'center',
       alignItems: 'center',
       marginBottom: spacing.sm,
     },
     spendingCategory: {
       fontSize: 12,
-      color: theme.colors.textSecondary || '#6B7280',
+      color: theme.colors.textSecondary,
       marginBottom: 2,
     },
     spendingAmount: {
@@ -348,10 +369,11 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
       fontWeight: '700',
       color: theme.colors.text,
       marginBottom: spacing.sm,
+      letterSpacing: -0.2,
     },
     spendingBarBg: {
       height: 4,
-      backgroundColor: theme.colors.border || '#E5E7EB',
+      backgroundColor: theme.colors.border,
       borderRadius: 2,
       overflow: 'hidden',
     },
@@ -360,18 +382,18 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
       borderRadius: 2,
     },
     transactionItem: {
-      backgroundColor: theme.colors.card || '#FFFFFF',
-      borderRadius: borderRadius.lg || 16,
+      backgroundColor: theme.colors.card,
+      borderRadius: 16,
+      borderWidth: 1,
+      borderColor: theme.colors.cardBorder,
       marginBottom: spacing.sm,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.03,
-      shadowRadius: 4,
-      elevation: 1,
+      overflow: 'hidden',
     },
     billCard: {
-      backgroundColor: theme.colors.card || '#FFFFFF',
-      borderRadius: borderRadius.lg || 16,
+      backgroundColor: theme.colors.card,
+      borderRadius: 16,
+      borderWidth: 1,
+      borderColor: theme.colors.cardBorder,
       padding: spacing.md,
       marginBottom: spacing.sm,
       flexDirection: 'row',
@@ -379,7 +401,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
       justifyContent: 'space-between',
       shadowColor: '#000',
       shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.03,
+      shadowOpacity: theme.dark ? 0.2 : 0.03,
       shadowRadius: 4,
       elevation: 1,
     },
@@ -391,7 +413,8 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     billIconContainer: {
       width: 40,
       height: 40,
-      borderRadius: 20,
+      borderRadius: 12,
+      borderWidth: 1,
       justifyContent: 'center',
       alignItems: 'center',
       marginRight: spacing.md,
@@ -403,7 +426,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     },
     billDue: {
       fontSize: 12,
-      color: theme.colors.textSecondary || '#6B7280',
+      color: theme.colors.textSecondary,
       marginTop: 2,
     },
     billRight: {
@@ -413,6 +436,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
       fontSize: 15,
       fontWeight: '700',
       color: theme.colors.text,
+      letterSpacing: -0.2,
     },
     billUrgencyDot: {
       width: 8,
@@ -426,14 +450,16 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     },
     goalCard: {
       width: 160,
-      backgroundColor: theme.colors.card || '#FFFFFF',
-      borderRadius: borderRadius.lg || 16,
+      backgroundColor: theme.colors.card,
+      borderRadius: 16,
+      borderWidth: 1,
+      borderColor: theme.colors.cardBorder,
       padding: spacing.lg,
       marginRight: spacing.md,
       alignItems: 'center',
       shadowColor: '#000',
       shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.05,
+      shadowOpacity: theme.dark ? 0.3 : 0.04,
       shadowRadius: 8,
       elevation: 2,
     },
@@ -446,22 +472,25 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     },
     goalTarget: {
       fontSize: 12,
-      color: theme.colors.textSecondary || '#6B7280',
+      color: theme.colors.textSecondary,
       marginTop: 4,
     },
     goalPercentage: {
       fontSize: 16,
       fontWeight: '800',
       marginTop: spacing.sm,
+      letterSpacing: -0.2,
     },
     budgetCard: {
-      backgroundColor: theme.colors.card || '#FFFFFF',
-      borderRadius: borderRadius.lg || 16,
+      backgroundColor: theme.colors.card,
+      borderRadius: 16,
+      borderWidth: 1,
+      borderColor: theme.colors.cardBorder,
       padding: spacing.md,
       marginBottom: spacing.sm,
       shadowColor: '#000',
       shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.03,
+      shadowOpacity: theme.dark ? 0.2 : 0.03,
       shadowRadius: 4,
       elevation: 1,
     },
@@ -634,27 +663,31 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
         </View>
 
         {/* Balance Card */}
-        <View style={styles.balanceCard}>
+        <LinearGradient
+          colors={theme.dark ? ['#6366F1', '#4F46E5', '#3730A3'] : ['#4F46E5', '#6366F1', '#818CF8']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.balanceCard}
+        >
           <Text style={styles.balanceLabel}>Total Balance</Text>
           <Text style={styles.balanceAmount}>{formatCurrency(totalBalance)}</Text>
           <View style={styles.balanceRow}>
             <View style={styles.balanceStat}>
               <View style={styles.balanceStatLabel}>
-                <Ionicons name="arrow-down-outline" size={12} color="#22C55E" />
+                <Ionicons name="arrow-down-outline" size={13} color="#4ADE80" />
                 <Text style={[styles.balanceStatLabel, { marginLeft: 4 }]}>Income</Text>
               </View>
               <Text style={styles.balanceStatValue}>{formatCurrency(totalIncome)}</Text>
             </View>
-            <View style={styles.balanceDivider} />
             <View style={styles.balanceStat}>
               <View style={styles.balanceStatLabel}>
-                <Ionicons name="arrow-up-outline" size={12} color="#EF4444" />
+                <Ionicons name="arrow-up-outline" size={13} color="#FCA5A5" />
                 <Text style={[styles.balanceStatLabel, { marginLeft: 4 }]}>Expenses</Text>
               </View>
               <Text style={styles.balanceStatValue}>{formatCurrency(totalExpenses)}</Text>
             </View>
           </View>
-        </View>
+        </LinearGradient>
 
         {/* Quick Actions */}
         <View style={styles.quickActionsRow}>
@@ -668,7 +701,10 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
               <View
                 style={[
                   styles.quickActionCircle,
-                  { backgroundColor: `${action.color}15` },
+                  {
+                    backgroundColor: `${action.color}15`,
+                    borderColor: `${action.color}30`,
+                  },
                 ]}
               >
                 <Ionicons

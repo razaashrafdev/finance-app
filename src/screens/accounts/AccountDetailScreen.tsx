@@ -287,9 +287,7 @@ const AccountDetailScreen: React.FC<AccountDetailScreenProps> = ({
               ]}
               activeOpacity={0.7}
               onPress={() =>
-                navigation.navigate('TransactionsList', {
-                  accountId: account.id,
-                })
+navigation.navigate('MainTabs', { screen: 'TransactionsTab', params: { screen: 'TransactionsList', params: { accountId: account.id } } })
               }
             >
               <View
@@ -488,9 +486,7 @@ const AccountDetailScreen: React.FC<AccountDetailScreenProps> = ({
             <TouchableOpacity
               activeOpacity={0.7}
               onPress={() =>
-                navigation.navigate('TransactionsList', {
-                  accountId: account.id,
-                })
+navigation.navigate('MainTabs', { screen: 'TransactionsTab', params: { screen: 'TransactionsList', params: { accountId: account.id } } })
               }
             >
               <Text style={[styles.seeAllLink, { color: colors.primary }]}>
@@ -606,9 +602,7 @@ const AccountDetailScreen: React.FC<AccountDetailScreenProps> = ({
               ]}
               activeOpacity={0.7}
               onPress={() =>
-                navigation.navigate('TransactionsList', {
-                  accountId: account.id,
-                })
+navigation.navigate('MainTabs', { screen: 'TransactionsTab', params: { screen: 'TransactionsList', params: { accountId: account.id } } })
               }
             >
               <Text style={[styles.viewAllText, { color: colors.primary }]}>

@@ -85,6 +85,8 @@ const AddAccountScreen: React.FC<AddAccountScreenProps> = ({ navigation }) => {
         style={styles.scrollView}
         contentContainerStyle={[styles.scrollContent, { paddingBottom: 156 }]}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        resetOnFocus={false}
       >
         {/* Hero Option - Connect Bank */}
         <TouchableOpacity

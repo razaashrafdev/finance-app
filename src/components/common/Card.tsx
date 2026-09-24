@@ -20,30 +20,38 @@ const Card: React.FC<CardProps> = ({
   onPress,
   variant = 'default',
 }) => {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
 
   const getCardStyle = (): ViewStyle => {
     const base: ViewStyle = {
       borderRadius: 16,
       padding: 16,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
     };
 
     const variantStyles: Record<string, ViewStyle> = {
       default: {
-        backgroundColor: colors.card || colors.background || '#FFFFFF',
+        backgroundColor: colors.card,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: isDark ? 0.35 : 0.04,
+        shadowRadius: 8,
+        elevation: 2,
       },
       elevated: {
-        backgroundColor: colors.card || colors.background || '#FFFFFF',
-        shadowColor: colors.text || '#000000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.08,
-        shadowRadius: 12,
-        elevation: 6,
+        backgroundColor: colors.card,
+        borderColor: isDark ? 'rgba(99, 102, 241, 0.2)' : 'rgba(79, 70, 229, 0.12)',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: isDark ? 0.45 : 0.08,
+        shadowRadius: 16,
+        elevation: 5,
       },
       outlined: {
         backgroundColor: 'transparent',
         borderWidth: 1,
-        borderColor: colors.border || '#E5E5E5',
+        borderColor: colors.border,
       },
     };
 
@@ -57,7 +65,7 @@ const Card: React.FC<CardProps> = ({
     return (
       <TouchableOpacity
         onPress={onPress}
-        activeOpacity={0.7}
+        activeOpacity={0.8}
         style={[getCardStyle(), style]}
       >
         {children}

@@ -55,7 +55,7 @@ const TransactionRow: React.FC<TransactionRowProps> = ({
 
   const categoryKey = transaction.category.toLowerCase();
   const iconName = toIonicon(transaction.icon || CATEGORY_ICONS[categoryKey] || 'ellipsis-horizontal-outline');
-  const categoryColor = CATEGORY_COLORS[categoryKey] || colors.primary || '#6366F1';
+  const categoryColor = CATEGORY_COLORS[categoryKey] || colors.primary;
 
   const formatAmount = (amount: number): string => {
     const formatted = Math.abs(amount).toLocaleString('en-US', {
@@ -66,8 +66,8 @@ const TransactionRow: React.FC<TransactionRowProps> = ({
   };
 
   const amountColor = transaction.type === 'income'
-    ? colors.success || '#10B981'
-    : colors.danger || '#EF4444';
+    ? colors.income
+    : colors.expense;
 
   return (
     <TouchableOpacity
@@ -76,8 +76,8 @@ const TransactionRow: React.FC<TransactionRowProps> = ({
       style={[
         styles.container,
         {
-          backgroundColor: colors.card || colors.background || '#FFFFFF',
-          borderBottomColor: colors.border || '#F3F4F6',
+          backgroundColor: colors.card,
+          borderBottomColor: colors.borderLight,
         },
         style,
       ]}
@@ -85,21 +85,24 @@ const TransactionRow: React.FC<TransactionRowProps> = ({
       <View
         style={[
           styles.iconContainer,
-          { backgroundColor: categoryColor + '15' },
+          {
+            backgroundColor: categoryColor + '14',
+            borderColor: categoryColor + '28',
+          },
         ]}
       >
-        <Ionicons name={iconName} size={22} color={categoryColor} />
+        <Ionicons name={iconName} size={20} color={categoryColor} />
       </View>
 
       <View style={styles.content}>
         <Text
-          style={[styles.title, { color: colors.text || '#1A1A1A' }]}
+          style={[styles.title, { color: colors.text }]}
           numberOfLines={1}
         >
           {transaction.title}
         </Text>
         <Text
-          style={[styles.subtitle, { color: colors.textSecondary || '#6B7280' }]}
+          style={[styles.subtitle, { color: colors.textSecondary }]}
           numberOfLines={1}
         >
           {transaction.category}
@@ -112,7 +115,7 @@ const TransactionRow: React.FC<TransactionRowProps> = ({
           {formatAmount(transaction.amount)}
         </Text>
         <Text
-          style={[styles.date, { color: colors.textTertiary || '#9CA3AF' }]}
+          style={[styles.date, { color: colors.textTertiary }]}
         >
           {transaction.date}
         </Text>
@@ -125,14 +128,15 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 14,
+    paddingVertical: 13,
     paddingHorizontal: 16,
     borderBottomWidth: 1,
   },
   iconContainer: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 42,
+    height: 42,
+    borderRadius: 13,
+    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 14,
@@ -145,9 +149,10 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
     marginBottom: 3,
+    letterSpacing: -0.2,
   },
   subtitle: {
-    fontSize: 13,
+    fontSize: 12,
   },
   amountContainer: {
     alignItems: 'flex-end',
@@ -156,9 +161,10 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '700',
     marginBottom: 3,
+    letterSpacing: -0.3,
   },
   date: {
-    fontSize: 12,
+    fontSize: 11,
   },
 });
 

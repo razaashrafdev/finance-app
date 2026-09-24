@@ -377,6 +377,8 @@ const AddTransactionScreen: React.FC<AddTransactionProps> = ({ navigation }) => 
       <ScreenScrollView
         contentContainerStyle={[styles.scrollContent, { paddingBottom: 156 }]}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        resetOnFocus={false}
       >
         {renderTypeSelector()}
         {renderAmountInput()}

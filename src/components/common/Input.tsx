@@ -37,35 +37,41 @@ const Input: React.FC<InputProps> = ({
   rightComponent,
   ...rest
 }) => {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const [isFocused, setIsFocused] = useState(false);
 
   const getContainerStyle = (): ViewStyle => {
     const base: ViewStyle = {
-      borderRadius: 12,
-      borderWidth: 1.5,
-      backgroundColor: colors.inputBackground || colors.background || '#F8F9FA',
+      borderRadius: 14,
+      borderWidth: 1,
+      backgroundColor: colors.inputBackground,
       paddingHorizontal: 16,
-      minHeight: 52,
+      minHeight: 50,
+      justifyContent: 'center',
     };
 
     if (error) {
       return {
         ...base,
-        borderColor: colors.danger || '#FF3B30',
+        borderColor: colors.danger,
       };
     }
 
     if (isFocused) {
       return {
         ...base,
-        borderColor: colors.primary,
+        borderColor: colors.inputFocus,
+        shadowColor: colors.inputFocus,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: isDark ? 0.3 : 0.12,
+        shadowRadius: 8,
+        elevation: 2,
       };
     }
 
     return {
       ...base,
-      borderColor: colors.border || '#E5E5E5',
+      borderColor: colors.inputBorder,
     };
   };
 
@@ -75,7 +81,7 @@ const Input: React.FC<InputProps> = ({
         <Text
           style={[
             styles.label,
-            { color: colors.textSecondary || '#6B7280' },
+            { color: colors.textSecondary },
           ]}
         >
           {label}
@@ -88,20 +94,22 @@ const Input: React.FC<InputProps> = ({
             value={value}
             onChangeText={onChangeText}
             placeholder={placeholder}
-            placeholderTextColor={colors.textTertiary || '#9CA3AF'}
+            placeholderTextColor={colors.textTertiary}
             secureTextEntry={secureTextEntry}
             multiline={multiline}
             keyboardType={keyboardType}
             style={[
               styles.input,
               {
-                color: colors.text || '#1A1A1A',
-                textAlignVertical: multiline ? 'center' : 'auto',
+                color: colors.text,
+                textAlignVertical: multiline ? 'top' : 'center',
+                minHeight: multiline ? 88 : undefined,
               },
               icon ? { paddingLeft: 0 } : null,
             ]}
             onFocus={() => setIsFocused(true)}
             onBlur={() => setIsFocused(false)}
+            blurOnSubmit={false}
             {...rest}
           />
           {rightComponent && (
@@ -110,7 +118,7 @@ const Input: React.FC<InputProps> = ({
         </View>
       </View>
       {error && (
-        <Text style={[styles.error, { color: colors.danger || '#FF3B30' }]}>
+        <Text style={[styles.error, { color: colors.danger }]}>
           {error}
         </Text>
       )}
@@ -123,24 +131,25 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   label: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
-    marginBottom: 8,
+    marginBottom: 7,
+    letterSpacing: 0.1,
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   icon: {
-    marginRight: 12,
+    marginRight: 10,
   },
   input: {
     flex: 1,
-    fontSize: 16,
-    paddingVertical: 14,
+    fontSize: 15,
+    paddingVertical: 12,
   },
   rightComponent: {
-    marginLeft: 12,
+    marginLeft: 10,
   },
   error: {
     fontSize: 12,

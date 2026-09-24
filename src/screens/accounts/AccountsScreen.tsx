@@ -8,11 +8,13 @@ import {
 } from 'react-native';
 import { ScreenScrollView } from '../../components/common/ScreenScroll';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../../theme/ThemeContext';
 import { availableBanks } from '../../data/banks';
 import { formatCurrency } from '../../utils/format';
 import { spacing, borderRadius, shadow } from '../../theme/spacing';
 import Button from '../../components/common/Button';
+import Badge from '../../components/common/Badge';
 import { useAppStore } from '../../store/AppStore';
 
 function timeAgo(dateStr: string): string {
@@ -110,37 +112,52 @@ const AccountsScreen: React.FC<AccountsScreenProps> = ({ navigation }) => {
         showsVerticalScrollIndicator={false}
       >
         {/* Total Balance Card */}
-        <View style={[styles.balanceCard, { backgroundColor: colors.primary }]}>
-          <Text style={styles.balanceLabel}>Total Balance</Text>
-          <Text style={styles.balanceAmount}>{formatCurrency(totalBalance)}</Text>
+        <LinearGradient
+          colors={isDark ? ['#6366F1', '#4F46E5', '#3730A3'] : ['#4F46E5', '#6366F1', '#818CF8']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.balanceCard}
+        >
+          <View style={styles.balanceHeaderRow}>
+            <View>
+              <Text style={styles.balanceLabel}>Total Balance</Text>
+              <Text style={styles.balanceAmount}>{formatCurrency(totalBalance)}</Text>
+            </View>
+            <View style={styles.balanceIconBubble}>
+              <Ionicons name="wallet-outline" size={24} color="#FFFFFF" />
+            </View>
+          </View>
           <View style={styles.balanceMeta}>
-            <Text style={styles.balanceSubtext}>
-              {connectedAccounts.length} connected account{connectedAccounts.length !== 1 ? 's' : ''}
-            </Text>
+            <View style={styles.metaPill}>
+              <Ionicons name="card-outline" size={13} color="rgba(255,255,255,0.9)" />
+              <Text style={styles.balanceSubtext}>
+                {connectedAccounts.length} connected account{connectedAccounts.length !== 1 ? 's' : ''}
+              </Text>
+            </View>
             <View style={styles.balanceDivider} />
             <Text style={styles.balanceSubtext}>
               Manual import only
             </Text>
           </View>
-        </View>
+        </LinearGradient>
 
         {/* Connect Bank Button */}
         <View style={styles.section}>
           <TouchableOpacity
-            style={[styles.connectButton, { backgroundColor: colors.primary + '10', borderColor: colors.primary + '30' }]}
+            style={[styles.connectButton, { backgroundColor: colors.card, borderColor: colors.cardBorder || colors.border }]}
             activeOpacity={0.7}
             onPress={() => navigation.navigate('AddAccount')}
           >
-            <View style={[styles.connectIconContainer, { backgroundColor: colors.primary + '20' }]}>
-              <Ionicons name="add-circle-outline" size={28} color={colors.primary} />
+            <View style={[styles.connectIconContainer, { backgroundColor: colors.primary + '18' }]}>
+              <Ionicons name="add-circle" size={26} color={colors.primary} />
             </View>
             <View style={styles.connectTextContainer}>
-              <Text style={[styles.connectTitle, { color: colors.primary }]}>Connect Bank</Text>
+              <Text style={[styles.connectTitle, { color: colors.text }]}>Connect Bank</Text>
               <Text style={[styles.connectSubtitle, { color: colors.textSecondary }]}>
                 Link a new bank account
               </Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color={colors.primary} />
+            <Ionicons name="chevron-forward" size={20} color={colors.textTertiary} />
           </TouchableOpacity>
         </View>
 
@@ -149,16 +166,17 @@ const AccountsScreen: React.FC<AccountsScreenProps> = ({ navigation }) => {
           <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Connected Accounts</Text>
           {connectedAccounts.map((account: any) => {
             const bankColor = getBankColor(account.bankId);
+            const badgeVariant = account.syncStatus === 'synced' ? 'success' : account.syncStatus === 'syncing' ? 'warning' : 'danger';
             return (
               <TouchableOpacity
                 key={account.id}
-                style={[styles.accountCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+                style={[styles.accountCard, { backgroundColor: colors.card, borderColor: colors.cardBorder || colors.border }]}
                 activeOpacity={0.7}
                 onPress={() => navigation.navigate('AccountDetail', { accountId: account.id })}
               >
                 <View style={styles.accountTop}>
-                  <View style={[styles.bankIcon, { backgroundColor: bankColor + '15' }]}>
-                    <Ionicons name="business-outline" size={22} color={bankColor} />
+                  <View style={[styles.bankIcon, { backgroundColor: bankColor + '18' }]}>
+                    <Ionicons name="business" size={22} color={bankColor} />
                   </View>
                   <View style={styles.accountInfo}>
                     <Text style={[styles.accountName, { color: colors.text }]} numberOfLines={1}>
@@ -180,7 +198,7 @@ const AccountsScreen: React.FC<AccountsScreenProps> = ({ navigation }) => {
                   </View>
                 </View>
 
-                <View style={[styles.accountDivider, { backgroundColor: colors.border }]} />
+                <View style={[styles.accountDivider, { backgroundColor: colors.borderLight || colors.border }]} />
 
                 <View style={styles.accountBottom}>
                   <View style={styles.accountMetaLeft}>
@@ -188,20 +206,12 @@ const AccountsScreen: React.FC<AccountsScreenProps> = ({ navigation }) => {
                       {account.maskedNumber}
                     </Text>
                     <View style={styles.syncRow}>
-                      <View
-                        style={[
-                          styles.syncDot,
-                          { backgroundColor: getSyncDotColor(account.syncStatus) },
-                        ]}
+                      <Badge
+                        variant={badgeVariant}
+                        label={getSyncLabel(account.syncStatus)}
+                        size="sm"
+                        dot
                       />
-                      <Text
-                        style={[
-                          styles.syncLabel,
-                          { color: getSyncDotColor(account.syncStatus) },
-                        ]}
-                      >
-                        {getSyncLabel(account.syncStatus)}
-                      </Text>
                       <Text style={[styles.syncTime, { color: colors.textTertiary }]}>
                         {timeAgo(account.lastSynced)}
                       </Text>
@@ -217,11 +227,11 @@ const AccountsScreen: React.FC<AccountsScreenProps> = ({ navigation }) => {
         {/* Add Account Manually */}
         <View style={styles.section}>
           <TouchableOpacity
-            style={[styles.manualCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+            style={[styles.manualCard, { backgroundColor: colors.card, borderColor: colors.cardBorder || colors.border }]}
             activeOpacity={0.7}
             onPress={() => navigation.navigate('AddAccount')}
           >
-            <View style={[styles.manualIcon, { backgroundColor: colors.primary + '10' }]}>
+            <View style={[styles.manualIcon, { backgroundColor: colors.primary + '14' }]}>
               <Ionicons name="create-outline" size={22} color={colors.primary} />
             </View>
             <View style={styles.manualInfo}>
@@ -239,20 +249,20 @@ const AccountsScreen: React.FC<AccountsScreenProps> = ({ navigation }) => {
         {/* Import Bank Statement */}
         <View style={styles.section}>
           <TouchableOpacity
-            style={[styles.importButton, { backgroundColor: colors.primary + '10', borderColor: colors.primary + '30' }]}
+            style={[styles.importButton, { backgroundColor: colors.card, borderColor: colors.cardBorder || colors.border }]}
             activeOpacity={0.7}
             onPress={() => navigation.navigate('BankStatement')}
           >
-            <View style={[styles.importIconContainer, { backgroundColor: colors.primary + '20' }]}>
-              <Ionicons name="document-text-outline" size={28} color={colors.primary} />
+            <View style={[styles.importIconContainer, { backgroundColor: colors.primary + '18' }]}>
+              <Ionicons name="document-text" size={24} color={colors.primary} />
             </View>
             <View style={styles.importTextContainer}>
-              <Text style={[styles.importTitle, { color: colors.primary }]}>Import Bank Statement</Text>
+              <Text style={[styles.importTitle, { color: colors.text }]}>Import Bank Statement</Text>
               <Text style={[styles.importSubtitle, { color: colors.textSecondary }]}>
                 Upload PDF statement to add transactions
               </Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color={colors.primary} />
+            <Ionicons name="chevron-forward" size={20} color={colors.textTertiary} />
           </TouchableOpacity>
         </View>
       </ScreenScrollView>
@@ -294,39 +304,67 @@ const styles = StyleSheet.create({
   },
   balanceCard: {
     marginHorizontal: spacing.lg,
-    marginTop: spacing.xl,
-    padding: spacing.xxl,
-    borderRadius: borderRadius.xl,
+    marginTop: spacing.lg,
+    padding: spacing.xl,
+    borderRadius: 20,
     shadowColor: '#6366F1',
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 16,
+    shadowOpacity: 0.35,
+    shadowRadius: 18,
     elevation: 8,
   },
+  balanceHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: spacing.md,
+  },
+  balanceIconBubble: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   balanceLabel: {
-    fontSize: 14,
-    color: 'rgba(255,255,255,0.7)',
-    marginBottom: spacing.xs,
+    fontSize: 13,
+    fontWeight: '500',
+    color: 'rgba(255,255,255,0.8)',
+    marginBottom: 4,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   balanceAmount: {
-    fontSize: 34,
+    fontSize: 32,
     fontWeight: '800',
     color: '#FFFFFF',
-    marginBottom: spacing.lg,
+    letterSpacing: -0.5,
   },
   balanceMeta: {
     flexDirection: 'row',
     alignItems: 'center',
+    paddingTop: spacing.xs,
+  },
+  metaPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 999,
+    gap: 6,
   },
   balanceSubtext: {
     fontSize: 12,
-    color: 'rgba(255,255,255,0.7)',
+    fontWeight: '500',
+    color: 'rgba(255,255,255,0.85)',
   },
   balanceDivider: {
     width: 1,
     height: 12,
     backgroundColor: 'rgba(255,255,255,0.3)',
-    marginHorizontal: spacing.md,
+    marginHorizontal: spacing.sm,
   },
   section: {
     marginTop: spacing.xl,
@@ -343,8 +381,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: spacing.lg,
-    borderRadius: borderRadius.lg,
+    borderRadius: 16,
     borderWidth: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
   connectIconContainer: {
     width: 48,
@@ -366,10 +409,15 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   accountCard: {
-    borderRadius: borderRadius.lg,
+    borderRadius: 16,
     borderWidth: 1,
     marginBottom: spacing.md,
     overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
   accountTop: {
     flexDirection: 'row',
@@ -419,78 +467,78 @@ const styles = StyleSheet.create({
   maskedNumber: {
     fontSize: 13,
     fontWeight: '500',
-    marginBottom: 4,
+    marginBottom: 6,
   },
   syncRow: {
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  syncDot: {
-    width: 7,
-    height: 7,
-    borderRadius: 4,
-    marginRight: 6,
-  },
-  syncLabel: {
-    fontSize: 12,
-    fontWeight: '600',
-    marginRight: 8,
+    gap: 8,
   },
   syncTime: {
     fontSize: 12,
   },
-manualCard: {
-     flexDirection: 'row',
-     alignItems: 'center',
-     padding: spacing.lg,
-     borderRadius: borderRadius.lg,
-     borderWidth: 1,
-   },
-   manualIcon: {
-     width: 44,
-     height: 44,
-     borderRadius: 12,
-     justifyContent: 'center',
-     alignItems: 'center',
-   },
-   manualInfo: {
-     flex: 1,
-     marginLeft: spacing.md,
-   },
-   manualTitle: {
-     fontSize: 15,
-     fontWeight: '600',
-   },
-   manualSubtitle: {
-     fontSize: 13,
-     marginTop: 2,
-   },
-   importButton: {
-     flexDirection: 'row',
-     alignItems: 'center',
-     padding: spacing.lg,
-     borderRadius: borderRadius.lg,
-     borderWidth: 1,
-   },
-   importIconContainer: {
-     width: 48,
-     height: 48,
-     borderRadius: 14,
-     justifyContent: 'center',
-     alignItems: 'center',
-   },
-   importTextContainer: {
-     flex: 1,
-     marginLeft: spacing.md,
-   },
-   importTitle: {
-     fontSize: 16,
-     fontWeight: '700',
-   },
-   importSubtitle: {
-     fontSize: 13,
-     marginTop: 2,
-   },
+  manualCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: spacing.lg,
+    borderRadius: 16,
+    borderWidth: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  manualIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  manualInfo: {
+    flex: 1,
+    marginLeft: spacing.md,
+  },
+  manualTitle: {
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  manualSubtitle: {
+    fontSize: 13,
+    marginTop: 2,
+  },
+  importButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: spacing.lg,
+    borderRadius: 16,
+    borderWidth: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  importIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  importTextContainer: {
+    flex: 1,
+    marginLeft: spacing.md,
+  },
+  importTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  importSubtitle: {
+    fontSize: 13,
+    marginTop: 2,
+  },
  });
 
 export default AccountsScreen;

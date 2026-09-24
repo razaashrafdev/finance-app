@@ -21,28 +21,31 @@ const EmptyState: React.FC<EmptyStateProps> = ({
   onAction,
   style,
 }) => {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
 
   return (
     <View style={[styles.container, style]}>
       <View
         style={[
           styles.iconContainer,
-          { backgroundColor: (colors.primary || '#6366F1') + '10' },
+          {
+            backgroundColor: isDark ? 'rgba(99, 102, 241, 0.12)' : 'rgba(79, 70, 229, 0.08)',
+            borderColor: isDark ? 'rgba(99, 102, 241, 0.25)' : 'rgba(79, 70, 229, 0.18)',
+          },
         ]}
       >
         <Ionicons
           name={icon}
-          size={56}
-          color={colors.textTertiary || '#9CA3AF'}
+          size={44}
+          color={colors.primaryLight || colors.primary}
         />
       </View>
-      <Text style={[styles.title, { color: colors.text || '#1A1A1A' }]}>
+      <Text style={[styles.title, { color: colors.text }]}>
         {title}
       </Text>
       {description && (
         <Text
-          style={[styles.description, { color: colors.textSecondary || '#6B7280' }]}
+          style={[styles.description, { color: colors.textSecondary }]}
         >
           {description}
         </Text>
@@ -65,31 +68,38 @@ const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 32,
-    paddingVertical: 48,
+    paddingHorizontal: 28,
+    paddingVertical: 40,
   },
   iconContainer: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+    width: 80,
+    height: 80,
+    borderRadius: 24,
+    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 24,
+    marginBottom: 20,
+    shadowColor: '#6366F1',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    elevation: 2,
   },
   title: {
     fontSize: 18,
     fontWeight: '700',
     textAlign: 'center',
     marginBottom: 8,
+    letterSpacing: -0.3,
   },
   description: {
-    fontSize: 15,
+    fontSize: 14,
     textAlign: 'center',
-    lineHeight: 22,
-    marginBottom: 24,
+    lineHeight: 21,
+    marginBottom: 20,
   },
   buttonContainer: {
-    marginTop: 8,
+    marginTop: 4,
   },
 });
 

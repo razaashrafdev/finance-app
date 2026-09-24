@@ -34,39 +34,51 @@ const Button: React.FC<ButtonProps> = ({
   iconPosition = 'left',
   style,
 }) => {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
 
   const getContainerStyle = (): ViewStyle => {
     const base: ViewStyle = {
-      borderRadius: 12,
+      borderRadius: 14,
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
     };
 
     const sizeStyles: Record<string, ViewStyle> = {
-      sm: { paddingVertical: 8, paddingHorizontal: 16 },
-      md: { paddingVertical: 12, paddingHorizontal: 24 },
-      lg: { paddingVertical: 16, paddingHorizontal: 32 },
+      sm: { paddingVertical: 8, paddingHorizontal: 14, minHeight: 36 },
+      md: { paddingVertical: 13, paddingHorizontal: 22, minHeight: 48 },
+      lg: { paddingVertical: 16, paddingHorizontal: 28, minHeight: 54 },
     };
 
     const variantStyles: Record<string, ViewStyle> = {
       primary: {
         backgroundColor: colors.primary,
+        shadowColor: colors.primary,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: isDark ? 0.35 : 0.25,
+        shadowRadius: 10,
+        elevation: 4,
       },
       secondary: {
-        backgroundColor: colors.primaryLight || colors.primary + '20',
+        backgroundColor: isDark ? 'rgba(99, 102, 241, 0.14)' : 'rgba(79, 70, 229, 0.08)',
+        borderWidth: 1,
+        borderColor: isDark ? 'rgba(99, 102, 241, 0.25)' : 'rgba(79, 70, 229, 0.18)',
       },
       outline: {
         backgroundColor: 'transparent',
-        borderWidth: 1.5,
-        borderColor: colors.border || colors.primary,
+        borderWidth: 1,
+        borderColor: colors.border,
       },
       ghost: {
         backgroundColor: 'transparent',
       },
       danger: {
-        backgroundColor: colors.danger || '#FF3B30',
+        backgroundColor: colors.danger,
+        shadowColor: colors.danger,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.25,
+        shadowRadius: 8,
+        elevation: 3,
       },
     };
 
@@ -80,16 +92,16 @@ const Button: React.FC<ButtonProps> = ({
 
   const getTextStyle = (): TextStyle => {
     const sizeStyles: Record<string, TextStyle> = {
-      sm: { fontSize: 14, fontWeight: '600' },
-      md: { fontSize: 16, fontWeight: '600' },
-      lg: { fontSize: 18, fontWeight: '700' },
+      sm: { fontSize: 13, fontWeight: '600' },
+      md: { fontSize: 15, fontWeight: '600' },
+      lg: { fontSize: 17, fontWeight: '700' },
     };
 
     const variantTextStyles: Record<string, TextStyle> = {
       primary: { color: '#FFFFFF' },
-      secondary: { color: colors.primary },
-      outline: { color: colors.text || '#1A1A1A' },
-      ghost: { color: colors.primary },
+      secondary: { color: colors.primaryLight || colors.primary },
+      outline: { color: colors.text },
+      ghost: { color: colors.primaryLight || colors.primary },
       danger: { color: '#FFFFFF' },
     };
 
@@ -99,7 +111,10 @@ const Button: React.FC<ButtonProps> = ({
     };
   };
 
-  const iconColor = variant === 'primary' || variant === 'danger' ? '#FFFFFF' : colors.primary;
+  const iconColor =
+    variant === 'primary' || variant === 'danger'
+      ? '#FFFFFF'
+      : colors.primaryLight || colors.primary;
 
   return (
     <TouchableOpacity
