@@ -25,7 +25,8 @@
       },
       "icon": "./assets/icon.png",
       "package": "com.financeflow.app",
-      "usesCleartextTraffic": true
+      "usesCleartextTraffic": true,
+      "softwareKeyboardLayoutMode": "pan"
     },
     "web": {
       "favicon": "./assets/favicon.png",

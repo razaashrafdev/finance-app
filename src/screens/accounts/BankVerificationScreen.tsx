@@ -88,7 +88,6 @@ const BankVerificationScreen: React.FC<BankVerificationScreenProps> = ({
           style={styles.scrollView}
           contentContainerStyle={[styles.scrollContent, { paddingBottom: 156 }]}
           showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
         >
           {/* Step Indicator */}
           <View style={styles.stepContainer}>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { forwardRef, useCallback, useState } from 'react';
 import {
   View,
   TextInput,
@@ -6,6 +6,8 @@ import {
   StyleSheet,
   ViewStyle,
   TextInputProps,
+  StyleProp,
+  TextStyle,
 } from 'react-native';
 import { useTheme } from '../../theme/ThemeContext';
 
@@ -19,112 +21,112 @@ interface InputProps extends Omit<TextInputProps, 'style'> {
   secureTextEntry?: boolean;
   multiline?: boolean;
   keyboardType?: TextInputProps['keyboardType'];
-  style?: ViewStyle;
+  /** Style for the outer wrapper (not the TextInput). */
+  style?: StyleProp<ViewStyle>;
+  /** Style for the TextInput itself. */
+  inputStyle?: StyleProp<TextStyle>;
   rightComponent?: React.ReactNode;
 }
 
-const Input: React.FC<InputProps> = ({
-  label,
-  value,
-  onChangeText,
-  placeholder,
-  error,
-  icon,
-  secureTextEntry,
-  multiline,
-  keyboardType,
-  style,
-  rightComponent,
-  ...rest
-}) => {
-  const { colors, isDark } = useTheme();
+const Input = forwardRef<TextInput, InputProps>(function Input(
+  {
+    label,
+    value,
+    onChangeText,
+    placeholder,
+    error,
+    icon,
+    secureTextEntry,
+    multiline,
+    keyboardType,
+    style,
+    inputStyle,
+    rightComponent,
+    returnKeyType,
+    onSubmitEditing,
+    onFocus,
+    onBlur,
+    blurOnSubmit,
+    ...rest
+  },
+  ref
+) {
+  const { colors } = useTheme();
   const [isFocused, setIsFocused] = useState(false);
 
-  const getContainerStyle = (): ViewStyle => {
-    const base: ViewStyle = {
-      borderRadius: 14,
-      borderWidth: 1,
-      backgroundColor: colors.inputBackground,
-      paddingHorizontal: 16,
-      minHeight: 50,
-      justifyContent: 'center',
-    };
+  const handleFocus = useCallback(
+    (event: any) => {
+      setIsFocused(true);
+      onFocus?.(event);
+    },
+    [onFocus]
+  );
 
-    if (error) {
-      return {
-        ...base,
-        borderColor: colors.danger,
-      };
-    }
+  const handleBlur = useCallback(
+    (event: any) => {
+      setIsFocused(false);
+      onBlur?.(event);
+    },
+    [onBlur]
+  );
 
-    if (isFocused) {
-      return {
-        ...base,
-        borderColor: colors.inputFocus,
-        shadowColor: colors.inputFocus,
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: isDark ? 0.3 : 0.12,
-        shadowRadius: 8,
-        elevation: 2,
-      };
-    }
-
-    return {
-      ...base,
-      borderColor: colors.inputBorder,
-    };
-  };
+  // Border color only — never change size/elevation on focus (that remounts layout
+  // and can cascade focus to the next field under the finger).
+  const borderColor = error
+    ? colors.danger
+    : isFocused
+      ? colors.inputFocus
+      : colors.inputBorder;
 
   return (
     <View style={[styles.wrapper, style]}>
-      {label && (
-        <Text
+      {label ? (
+        <Text style={[styles.label, { color: colors.textSecondary }]}>{label}</Text>
+      ) : null}
+      <View
+        style={[
+          styles.container,
+          {
+            backgroundColor: colors.inputBackground,
+            borderColor,
+          },
+          multiline ? styles.containerMultiline : null,
+        ]}
+      >
+        {icon ? <View style={styles.icon}>{icon}</View> : null}
+        <TextInput
+          ref={ref}
+          value={value}
+          onChangeText={onChangeText}
+          placeholder={placeholder}
+          placeholderTextColor={colors.textTertiary}
+          secureTextEntry={secureTextEntry}
+          multiline={multiline}
+          keyboardType={keyboardType}
+          returnKeyType={returnKeyType}
+          onSubmitEditing={onSubmitEditing}
           style={[
-            styles.label,
-            { color: colors.textSecondary },
+            styles.input,
+            {
+              color: colors.text,
+              textAlignVertical: multiline ? 'top' : 'center',
+            },
+            multiline ? styles.inputMultiline : null,
+            inputStyle,
           ]}
-        >
-          {label}
-        </Text>
-      )}
-      <View style={getContainerStyle()}>
-        <View style={styles.inputContainer}>
-          {icon && <View style={styles.icon}>{icon}</View>}
-          <TextInput
-            value={value}
-            onChangeText={onChangeText}
-            placeholder={placeholder}
-            placeholderTextColor={colors.textTertiary}
-            secureTextEntry={secureTextEntry}
-            multiline={multiline}
-            keyboardType={keyboardType}
-            style={[
-              styles.input,
-              {
-                color: colors.text,
-                textAlignVertical: multiline ? 'top' : 'center',
-                minHeight: multiline ? 88 : undefined,
-              },
-              icon ? { paddingLeft: 0 } : null,
-            ]}
-            onFocus={() => setIsFocused(true)}
-            onBlur={() => setIsFocused(false)}
-            blurOnSubmit={false}
-            {...rest}
-          />
-          {rightComponent && (
-            <View style={styles.rightComponent}>{rightComponent}</View>
-          )}
-        </View>
+          {...rest}
+          autoFocus={false}
+          // Default false: Android otherwise advances focus to the next field on submit.
+          blurOnSubmit={blurOnSubmit ?? false}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
+        />
+        {rightComponent ? <View style={styles.rightComponent}>{rightComponent}</View> : null}
       </View>
-      {error && (
-        <Text style={[styles.error, { color: colors.danger }]}>
-          {error}
-        </Text>
-      )}
+      {error ? <Text style={[styles.error, { color: colors.danger }]}>{error}</Text> : null}
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   wrapper: {
@@ -136,9 +138,18 @@ const styles = StyleSheet.create({
     marginBottom: 7,
     letterSpacing: 0.1,
   },
-  inputContainer: {
+  container: {
+    borderRadius: 14,
+    borderWidth: 1,
+    paddingHorizontal: 16,
+    minHeight: 50,
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  containerMultiline: {
+    alignItems: 'flex-start',
+    paddingVertical: 10,
+    minHeight: 100,
   },
   icon: {
     marginRight: 10,
@@ -147,6 +158,12 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 15,
     paddingVertical: 12,
+    margin: 0,
+  },
+  inputMultiline: {
+    minHeight: 80,
+    paddingTop: 0,
+    paddingBottom: 0,
   },
   rightComponent: {
     marginLeft: 10,

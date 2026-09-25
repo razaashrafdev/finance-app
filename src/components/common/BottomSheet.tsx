@@ -149,6 +149,8 @@ const BottomSheet: React.FC<BottomSheetProps> = ({
             style={styles.content}
             contentContainerStyle={styles.contentContainer}
             showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
           >
             {children}
           </ScrollView>

@@ -89,8 +89,8 @@ const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({ navigation }) => {
     <ScrollView
       style={styles.scrollView}
       contentContainerStyle={styles.scrollContent}
-      keyboardShouldPersistTaps="always"
-      keyboardDismissMode="none"
+      keyboardShouldPersistTaps="handled"
+      keyboardDismissMode="on-drag"
       showsVerticalScrollIndicator={false}
       nestedScrollEnabled
     >
@@ -460,3 +460,5 @@ const styles = StyleSheet.create({
 });
 
 export default AddExpenseScreen;
+
+

@@ -85,8 +85,6 @@ export function createEmptyCanonicalState(userId = '') {
     settings: createDefaultSettings(),
     metadata: {
       userId,
-      driveFileId: null,
-      driveFolderId: null,
       lastSyncedAt: null,
       version: 1,
     },
@@ -114,8 +112,6 @@ export function mapToCanonicalState(data: Record<string, any>) {
     settings: data.settings || createDefaultSettings(),
     metadata: data.metadata || {
       userId: '',
-      driveFileId: null,
-      driveFolderId: null,
       lastSyncedAt: null,
       version: 1,
     },
@@ -158,8 +154,6 @@ export function appStoreToCanonical(storeState: Record<string, any>, userId = ''
     settings: { ...createDefaultSettings(), ...(storeState.settings || {}) },
     metadata: {
       userId,
-      driveFileId: storeState.metadata?.driveFileId || null,
-      driveFolderId: storeState.metadata?.driveFolderId || null,
       lastSyncedAt: new Date().toISOString(),
       version: 1,
     },

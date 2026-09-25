@@ -17,7 +17,6 @@ import ProgressRing from '../../components/common/ProgressRing';
 import TransactionRow from '../../components/common/TransactionRow';
 import { resolveCategories } from '../../data/categories';
 import { useAppStore } from '../../store/AppStore';
-import DriveConnectPrompt from '../../components/common/DriveConnectPrompt';
 import { formatCurrency, formatShortDate, getGreeting } from '../../utils/format';
 import { spacing, borderRadius } from '../../theme/spacing';
 
@@ -633,7 +632,6 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
         contentContainerStyle={[styles.scrollContent, { paddingBottom: 156 }]}
         showsVerticalScrollIndicator={false}
       >
-        <DriveConnectPrompt />
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.greetingContainer}>

@@ -108,33 +108,33 @@ export async function changePassword(currentPassword: string, newPassword: strin
   });
 }
 
-export async function startDriveOAuth() {
-  return apiRequest<{ url: string }>('/api/drive/auth', {
-    method: 'GET',
-  });
+export type FinanceDataPayload = {
+  encryptedPayload: string;
+  payloadVersion: number;
+  encryptionVersion?: number;
+  payloadHash?: string;
+};
+
+export type FinanceDataResponse = {
+  exists: boolean;
+  data: {
+    encryptedPayload: string;
+    payloadVersion: number;
+    encryptionVersion: number;
+    payloadHash: string | null;
+    updatedAt: string;
+  } | null;
+};
+
+/** Load the authenticated user's encrypted FinanceFlow snapshot from Supabase. */
+export async function getFinanceData() {
+  return apiRequest<FinanceDataResponse>('/api/finance/data', { method: 'GET' });
 }
 
-export async function checkDriveStatus() {
-  return apiRequest<{ connected: boolean; userId: string; driveFolderId?: string; driveFileId?: string; connectedAt?: string }>('/api/drive/status', {
-    method: 'GET',
-  });
-}
-
-export async function loadDriveData() {
-  return apiRequest<{ data: Record<string, any> }>('/api/drive/data', {
-    method: 'GET',
-  });
-}
-
-export async function syncDriveData(data: Record<string, any>) {
-  return apiRequest<{ message: string; driveFileId: string }>('/api/drive/sync', {
-    method: 'POST',
-    body: { data },
-  });
-}
-
-export async function disconnectDrive() {
-  return apiRequest<{ message: string }>('/api/drive/disconnect', {
-    method: 'POST',
+/** Upsert the authenticated user's encrypted FinanceFlow snapshot. */
+export async function putFinanceData(payload: FinanceDataPayload) {
+  return apiRequest<{ message: string; payloadVersion: number; updatedAt: string }>('/api/finance/data', {
+    method: 'PUT',
+    body: payload,
   });
 }

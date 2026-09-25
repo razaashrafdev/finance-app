@@ -315,7 +315,7 @@ export default function BankStatementScreen({ navigation }: { navigation: any })
             <Badge
               key={label}
               label={label}
-              variant={i <= Math.floor(processingProgress / 33) ? 'primary' : 'gray'}
+              variant={i <= Math.floor(processingProgress / 33) ? 'primary' : 'neutral'}
               size="sm"
             />
           ))}

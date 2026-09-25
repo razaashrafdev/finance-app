@@ -120,29 +120,3 @@ export async function clearPendingSignup() {
     // Ignore
   }
 }
-
-const DRIVE_PROMPT_KEY = 'financeflow.drivePrompt';
-
-export async function saveDrivePromptPending() {
-  await setItem(DRIVE_PROMPT_KEY, String(Date.now()));
-}
-
-export async function getDrivePromptAgeMs(): Promise<number | null> {
-  try {
-    const raw = await getItem(DRIVE_PROMPT_KEY);
-    if (!raw) return null;
-    const startedAt = Number(raw);
-    if (!Number.isFinite(startedAt) || startedAt <= 0) return 0;
-    return Date.now() - startedAt;
-  } catch {
-    return null;
-  }
-}
-
-export async function clearDrivePromptPending() {
-  try {
-    await deleteItem(DRIVE_PROMPT_KEY);
-  } catch {
-    // Ignore
-  }
-}

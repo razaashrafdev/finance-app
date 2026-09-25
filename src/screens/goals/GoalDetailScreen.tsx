@@ -46,16 +46,18 @@ const GoalDetailScreen: React.FC<GoalDetailScreenProps> = ({ navigation, route }
     );
   }
 
-  const percentage = goal.targetAmount > 0
-    ? Math.round((goal.currentAmount / goal.targetAmount) * 100)
+  const percentage = (goal.targetAmount || 0) > 0
+    ? Math.round(((goal.currentAmount || 0) / (goal.targetAmount || 0)) * 100)
     : 0;
-  const remaining = goal.targetAmount - goal.currentAmount;
+  const remaining = (goal.targetAmount || 0) - (goal.currentAmount || 0);
   const days = daysUntil(goal.deadline);
   const catColor = goal.color || '#4F46E5';
+  const goalName = goal.name || 'Goal';
+  const goalIcon = goal.icon || 'flag';
 
   const handleAddMoney = () => {
     const parsed = parseFloat(addAmount) || 50;
-    updateGoal(goal.id, { currentAmount: goal.currentAmount + parsed });
+    updateGoal(goal.id, { currentAmount: (goal.currentAmount || 0) + parsed });
     setAddMoneyVisible(false);
     setAddAmount('');
   };
@@ -63,7 +65,7 @@ const GoalDetailScreen: React.FC<GoalDetailScreenProps> = ({ navigation, route }
   const handleDelete = () => {
     Alert.alert(
       'Delete Goal',
-      `Are you sure you want to delete "${goal.name}"? This cannot be undone.`,
+      `Are you sure you want to delete "${goalName}"? This cannot be undone.`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -90,7 +92,7 @@ const GoalDetailScreen: React.FC<GoalDetailScreenProps> = ({ navigation, route }
           <Ionicons name="chevron-back" size={22} color={colors.text} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.text }]} numberOfLines={1}>
-          {goal.name}
+          {goalName}
         </Text>
         <View style={styles.headerSpacer} />
       </View>
@@ -110,7 +112,7 @@ const GoalDetailScreen: React.FC<GoalDetailScreenProps> = ({ navigation, route }
           >
             <View style={styles.ringContent}>
               <Ionicons
-                name={toIonicon(goal.icon || 'flag')}
+                name={toIonicon(goalIcon)}
                 size={32}
                 color={catColor}
               />
@@ -121,10 +123,10 @@ const GoalDetailScreen: React.FC<GoalDetailScreenProps> = ({ navigation, route }
 
         <View style={styles.amountSection}>
           <Text style={[styles.savedAmount, { color: colors.text }]}>
-            {formatCurrency(goal.currentAmount)}
+            {formatCurrency(goal.currentAmount || 0)}
             <Text style={[styles.targetAmount, { color: colors.textSecondary }]}>
               {' of '}
-              {formatCurrency(goal.targetAmount)}
+              {formatCurrency(goal.targetAmount || 0)}
             </Text>
           </Text>
           <Text style={[styles.remainingText, { color: catColor }]}>
@@ -142,7 +144,7 @@ const GoalDetailScreen: React.FC<GoalDetailScreenProps> = ({ navigation, route }
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>Milestones</Text>
           <Card variant="elevated" style={styles.milestonesCard}>
-            {goal.milestones.map((milestone: any, index: number) => (
+            {(goal.milestones || []).map((milestone: any, index: number) => (
               <View key={index} style={styles.milestoneRow}>
                 <View style={styles.milestoneTimeline}>
                   <View
@@ -158,7 +160,7 @@ const GoalDetailScreen: React.FC<GoalDetailScreenProps> = ({ navigation, route }
                       <Ionicons name="checkmark" size={12} color="#FFFFFF" />
                     )}
                   </View>
-                  {index < goal.milestones.length - 1 && (
+                  {index < (goal.milestones || []).length - 1 && (
                     <View
                       style={[
                         styles.milestoneLine,
@@ -174,7 +176,7 @@ const GoalDetailScreen: React.FC<GoalDetailScreenProps> = ({ navigation, route }
                 </View>
                 <View style={styles.milestoneInfo}>
                   <Text style={[styles.milestoneAmount, { color: colors.text }]}>
-                    {formatCurrency(milestone.amount)}
+                    {formatCurrency(milestone.amount || 0)}
                   </Text>
                   <Text style={[styles.milestoneDate, { color: colors.textSecondary }]}>
                     {milestone.reached
